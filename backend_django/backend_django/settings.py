@@ -69,17 +69,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend_django.wsgi.application"
 
+import dj_database_url
+
 # MySQL 配置：连接你现在的 anyue_lemon 库
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "anyue_lemon",
+#         "USER": "root",
+#         "PASSWORD": "linjiamin2006",
+#         "HOST": "localhost",
+#         "PORT": "3306",
+#         "OPTIONS": {"charset": "utf8mb4"},
+#     }
+# }
+
+# 生产环境从 DATABASE_URL 环境变量读取数据库配置
+# 本地开发时，如果没有设置 DATABASE_URL，则回退到使用本地的 MySQL 数据库
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "anyue_lemon",
-        "USER": "root",
-        "PASSWORD": "linjiamin2006",
-        "HOST": "localhost",
-        "PORT": "3306",
-        "OPTIONS": {"charset": "utf8mb4"},
-    }
+    'default': dj_database_url.config(
+        default='mysql://root:linjiamin2006@localhost:3306/anyue_lemon?charset=utf8mb4',
+        conn_max_age=600
+    )
 }
 
 LANGUAGE_CODE = "zh-hans"
