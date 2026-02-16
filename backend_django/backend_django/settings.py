@@ -13,17 +13,8 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    '.up.railway.app',  # 允许所有 Railway 的子域名
 ]
-
-# 从 Railway 环境变量中动态添加允许的域名
-RAILWAY_STATIC_URL = os.environ.get('RAILWAY_STATIC_URL')
-if RAILWAY_STATIC_URL:
-    # The URL is like https://my-app.up.railway.app, we need the hostname
-    from urllib.parse import urlparse
-    # Ensure the hostname is not None before appending
-    hostname = urlparse(RAILWAY_STATIC_URL).hostname
-    if hostname:
-        ALLOWED_HOSTS.append(hostname)
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 INSTALLED_APPS = [
