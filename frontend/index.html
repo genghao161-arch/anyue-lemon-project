@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>石刻护柠 · 商品</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <!-- cloud -->
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item nav__item--active" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <!-- bag -->
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <!-- book -->
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <!-- map pin -->
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <a class="toplink" href="vote.html" id="authLink">登录注册</a>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page">
+      <section class="hero container">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="assets/搜索.png" alt="石刻护柠 Logo" style="max-width: 480px; height: auto; object-fit: contain;" />
+        </div>
+        <div class="searchbar" role="search">
+          <div class="searchbar__content">
+            <span class="searchbar__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M10.8 18.3a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.6"/><path d="M16.7 16.7 21 21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            <input id="productSearch" class="searchbar__input" type="search" placeholder="搜索商品名称、描述或分类..." autocomplete="off" />
+          </div>
+          <button class="searchbar__btn" type="submit">搜索</button>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="商品分类">
+          <button class="tab tab--active" data-category="all" role="tab" aria-selected="true">全部</button>
+          <button class="tab" data-category="fresh" role="tab" aria-selected="false">鲜柠檬</button>
+          <button class="tab" data-category="processed" role="tab" aria-selected="false">深加工品</button>
+          <button class="tab" data-category="cultural" role="tab" aria-selected="false">石窟文创</button>
+        </div>
+      </section>
+
+      <section class="container">
+        <div class="grid" id="productGrid" aria-live="polite"></div>
+        <div class="empty" id="emptyState" hidden>
+          <div class="empty__title">没有匹配的商品</div>
+          <div class="empty__desc">试试换个关键词或切换分类。</div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

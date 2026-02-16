@@ -1,0 +1,1490 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>商品详情 · 石刻护柠</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .product-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin: 30px 0;
+      }
+      /* 商品图片画廊（左侧缩略图 + 右侧大图） */
+      .product-gallery {
+        background: #f8f8f8;
+        border-radius: 12px;
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 14px;
+        min-height: 420px;
+        align-items: stretch;
+      }
+      .product-thumbs {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+      .product-thumb {
+        width: 84px;
+        height: 84px;
+        padding: 0;
+        border-radius: 10px;
+        border: 1px solid rgba(160, 140, 90, 0.25);
+        background: rgba(255,255,255,0.7);
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        appearance: none;
+        -webkit-appearance: none;
+        outline: none;
+      }
+      .product-thumb:hover {
+        transform: translateY(-1px);
+        border-color: rgba(200, 176, 106, 0.6);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      }
+      .product-thumb.active {
+        border-color: rgba(200, 176, 106, 0.9);
+        box-shadow: 0 0 0 3px rgba(200, 176, 106, 0.18);
+      }
+      .product-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .product-main {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.85);
+        border: 1px solid rgba(160, 140, 90, 0.12);
+        overflow: hidden;
+      }
+      .product-main img {
+        width: 100%;
+        height: 100%;
+        max-height: 520px;
+        /* 关键：铺满容器，不留左右白边（必要时会裁切） */
+        object-fit: cover;
+        display: block;
+      }
+      .product-info {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .product-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0;
+      }
+      .product-price {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0;
+      }
+      /* 已移除“商品规格胶囊”展示：规格统一使用下方 sku 列表 */
+      /* 规格列表（仿淘宝右侧规格行） */
+      .sku-list {
+        background: transparent;
+        border: none;
+        padding: 10px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        box-shadow: none;
+        transition: none;
+      }
+      .sku-list:hover {
+        box-shadow: none;
+      }
+      .sku-list__title {
+        display: none; /* 图一风格不需要显式的“规格选择”大标题，或者可以保留但样式简化 */
+      }
+      .sku-items {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        max-height: 480px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 8px;
+        padding-bottom: 4px;
+      }
+      /* 美化滚动条 */
+      .sku-items::-webkit-scrollbar {
+        width: 8px;
+      }
+      .sku-items::-webkit-scrollbar-track {
+        background: rgba(247, 243, 234, 0.5);
+        border-radius: 10px;
+      }
+      .sku-items::-webkit-scrollbar-thumb {
+        background: rgba(200, 176, 106, 0.4);
+        border-radius: 10px;
+        transition: background 0.2s ease;
+      }
+      .sku-items::-webkit-scrollbar-thumb:hover {
+        background: rgba(200, 176, 106, 0.6);
+      }
+      /* 每一组规格：左侧是“颜色/总量”等标签，右侧是具体选项按钮 */
+      .sku-group {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 0;
+        margin-bottom: 16px;
+        background: transparent;
+        border: none;
+      }
+      .sku-group:hover {
+        background: transparent;
+        border-color: transparent;
+      }
+      .sku-group__label {
+        flex: 0 0 40px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--muted);
+        padding-top: 0;
+        white-space: nowrap;
+        text-align: left;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      .sku-group__body {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      /* 简单规格（我们在后台录入的 specs）展示为紧凑按钮，类似图一 */
+      .sku-item--simple {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        padding: 8px 20px;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 38px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        font-family: system-ui, -apple-system, sans-serif; /* UI Font */
+      }
+      .sku-item--simple:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(255,255,255,0.8);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(200, 176, 106, 0.15);
+      }
+      .sku-item--simple .sku-item__left {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+      }
+      .sku-item__thumb {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #f0f0f0;
+        flex-shrink: 0;
+        border: 1px solid rgba(0,0,0,0.05);
+      }
+      .sku-item__thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .sku-item__texts {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sku-item--simple .sku-item__name {
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 400;
+      }
+      .sku-item--simple.active .sku-item__name {
+        color: #fff;
+        font-weight: 500;
+      }
+      .sku-item--simple .sku-item__sub {
+        display: none; /* 隐藏冗余的副标题 */
+      }
+      .sku-item--simple.active {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-color: transparent;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(200, 176, 106, 0.3);
+        transform: translateY(-1px);
+      }
+      /* 移除旧的 flex column 样式影响 */
+      .sku-item {
+        margin: 0;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      /* 详情页收藏按钮样式 */
+      #favorite-btn.product__fav {
+        position: static;
+        margin: 0;
+      }
+      .btn {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 999px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        letter-spacing: 1px;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #d4c07b, #b6984f);
+        color: white;
+        box-shadow: 0 8px 20px -4px rgba(182, 152, 64, 0.5);
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -6px rgba(182, 152, 64, 0.6);
+      }
+      .btn-secondary {
+        background: #fff;
+        color: #b6984f;
+        border: 1px solid #e0d6c0;
+      }
+      .btn-secondary:hover {
+        background: #faf8f2;
+        border-color: #b6984f;
+        color: #9d8750;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -6px rgba(0,0,0,0.08);
+      }
+      /* 标签页样式 */
+      .product-tabs {
+        margin-top: 40px;
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid rgba(160, 140, 90, 0.2);
+      }
+      .product-tab {
+        padding: 16px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        bottom: -2px;
+      }
+      .product-tab:hover {
+        color: var(--accent2);
+      }
+      .product-tab.active {
+        color: var(--accent2);
+        border-bottom-color: var(--accent);
+        font-weight: 600;
+      }
+      .product-tab-content {
+        display: none;
+        margin-top: 24px;
+      }
+      .product-tab-content.active {
+        display: block;
+      }
+      
+      .product-description {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      .description-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 20px 0;
+      }
+      .description-content {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      
+      /* 评论区样式 */
+      .comment-section {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      .comment-form {
+        margin-bottom: 32px;
+        padding: 20px;
+        background: rgba(247, 243, 234, 0.5);
+        border-radius: 12px;
+        border: 1px solid rgba(200, 176, 106, 0.2);
+      }
+      .comment-form__title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 16px 0;
+      }
+      .comment-form__rating {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .comment-form__rating-label {
+        font-size: 14px;
+        color: var(--ink);
+      }
+      .comment-form__stars {
+        display: flex;
+        gap: 4px;
+      }
+      .comment-form__star {
+        font-size: 24px;
+        color: #ddd;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        line-height: 1;
+      }
+      .comment-form__star:hover,
+      .comment-form__star.active {
+        color: #ffc107;
+      }
+      .comment-form__input {
+        width: 100%;
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid rgba(160, 140, 90, 0.3);
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        resize: vertical;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+      }
+      .comment-form__input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(200, 176, 106, 0.1);
+      }
+      .comment-form__submit {
+        padding: 10px 24px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .comment-form__submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(200, 176, 106, 0.3);
+      }
+      .comment-form__submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+      
+      .comment-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .comment-item {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(160, 140, 90, 0.15);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+      }
+      .comment-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .comment-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .comment-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .comment-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .comment-user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .comment-username {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .comment-rating {
+        display: flex;
+        gap: 2px;
+      }
+      .comment-rating-star {
+        font-size: 14px;
+        color: #ffc107;
+      }
+      .comment-date {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .comment-content {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--ink);
+        margin-bottom: 12px;
+      }
+      .comment-actions {
+        display: flex;
+        gap: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(160, 140, 90, 0.1);
+      }
+      .comment-action {
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+      .comment-action:hover {
+        color: var(--accent2);
+      }
+      .comment-empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+      }
+      .comment-empty__icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+      .comment-empty__text {
+        font-size: 14px;
+      }
+
+      @media (max-width: 980px) {
+        .product-container {
+          grid-template-columns: 1fr;
+        }
+        .product-gallery {
+          grid-template-columns: 1fr;
+        }
+        .product-thumbs {
+          flex-direction: row;
+          padding-right: 0;
+          padding-bottom: 4px;
+        }
+        .product-thumb {
+          width: 76px;
+          height: 76px;
+          flex: 0 0 auto;
+        }
+      }
+      
+      /* 商品详情表格样式 */
+      .detail-attributes-table {
+        margin-bottom: 24px;
+        border: 1px solid rgba(0,0,0,0.06);
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 14px;
+      }
+      .detail-attribute-row {
+        display: flex;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+      }
+      .detail-attribute-row:last-child {
+        border-bottom: none;
+      }
+      .detail-attribute-name {
+        width: 120px;
+        padding: 12px 16px;
+        font-weight: 500;
+        color: var(--muted);
+        background: rgba(250, 246, 236, 0.5);
+        border-right: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+      }
+      .detail-attribute-value {
+        flex: 1;
+        padding: 12px 16px;
+        color: var(--ink);
+        background: #fff;
+      }
+      .detail-images img {
+        width: 100%;
+        display: block;
+        margin-bottom: 0;
+        border-radius: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回商品页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page">
+      <section class="container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="javascript:void(0)" onclick="history.back(); return false;" style="color: var(--accent2); text-decoration: none; cursor: pointer;">&lt; 返回</a>
+            <a href="index.html" style="color: var(--accent2); text-decoration: none;">首页</a>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="favorite-btn" class="product__fav" type="button" aria-label="收藏" aria-pressed="false">
+              <span class="star-icon">☆</span>
+              <span class="favorite-text">收藏</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="product-container">
+          <div class="product-gallery" aria-label="商品图片">
+            <div class="product-thumbs" id="productThumbs" aria-label="缩略图列表"></div>
+            <div class="product-main">
+              <img id="productMainImg" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fresh%20lemon%20fruit%20on%20white%20background&image_size=square" alt="商品图片" />
+            </div>
+          </div>
+          <div class="product-info">
+            <h1 class="product-title">安岳新鲜柠檬</h1>
+            <p class="product-price">¥19.90</p>
+            
+        <!-- 已移除“商品规格/标准规格”胶囊区域：规格统一使用下方“规格选择”列表 -->
+
+            <!-- 规格列表（替代“卖家信息”） -->
+            <div class="sku-list" id="skuList" aria-label="规格列表" hidden>
+              <div class="sku-list__title">规格选择</div>
+              <div class="sku-list__group-name" id="skuGroupName" style="font-size:13px;color:var(--muted);margin-bottom:6px;"></div>
+              <div class="sku-items" id="skuItems"></div>
+            </div>
+
+            <div class="action-buttons">
+              <button class="btn btn-secondary">联系客服</button>
+            <button class="btn btn-primary">立即购买</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 标签页 -->
+        <div class="product-tabs">
+          <button class="product-tab active" data-tab="details">商品详情</button>
+          <button class="product-tab" data-tab="comments">评论</button>
+        </div>
+
+        <!-- 商品详情内容 -->
+        <div class="product-tab-content active" id="detailsContent">
+          <div class="product-description">
+            <h2 class="description-title">商品详情</h2>
+            <div class="description-content">
+              <!-- 动态加载内容 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 评论内容 -->
+        <div class="product-tab-content" id="commentsContent">
+          <div class="comment-section">
+            <!-- 评论表单 -->
+            <div class="comment-form">
+              <h3 class="comment-form__title">发表评论</h3>
+              <div class="comment-form__rating">
+                <span class="comment-form__rating-label">评分：</span>
+                <div class="comment-form__stars" id="ratingStars">
+                  <span class="comment-form__star" data-rating="1">☆</span>
+                  <span class="comment-form__star" data-rating="2">☆</span>
+                  <span class="comment-form__star" data-rating="3">☆</span>
+                  <span class="comment-form__star" data-rating="4">☆</span>
+                  <span class="comment-form__star" data-rating="5">☆</span>
+                </div>
+                <span id="ratingText" style="font-size: 13px; color: var(--muted); margin-left: 8px;">请选择评分</span>
+              </div>
+              <textarea 
+                class="comment-form__input" 
+                id="commentInput" 
+                placeholder="写下您的购买体验和使用感受..."
+                maxlength="500"></textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: var(--muted);">
+                  <span id="charCount">0</span>/500
+                </span>
+                <button class="comment-form__submit" id="submitComment">发表评论</button>
+              </div>
+            </div>
+
+            <!-- 评论列表 -->
+            <div class="comment-list" id="commentList">
+              <!-- 评论将动态加载到这里 -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+      function escapeHtml(str) {
+        if (str == null) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // 已移除“商品规格胶囊”展示：规格统一使用下方 sku 列表
+
+      // 购买按钮点击事件 - 跳转到淘宝商品页面
+      document.querySelector('.btn-primary').addEventListener('click', function() {
+        // 获取当前商品ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id') || 'fresh-1';
+        
+        // 从商品数据中获取淘宝链接
+        const products = window.PRODUCTS || [];
+        const product = products.find(p => p.id === productId);
+        
+        if (product && product.taobaoUrl) {
+          // 在新标签页打开淘宝链接
+          window.open(product.taobaoUrl, '_blank');
+        } else {
+          // 如果没有找到对应商品，跳转到淘宝搜索页面
+          const title = document.querySelector('.product-title')?.textContent || '安岳柠檬';
+          window.open(`https://s.taobao.com/search?q=${encodeURIComponent(title)}`, '_blank');
+        }
+      });
+
+      // 联系客服：带上当前商品信息，客服页会刷新为该商品并可选择发送给客服
+      document.querySelector('.btn-secondary').addEventListener('click', function() {
+        const titleEl = document.querySelector('.product-title');
+        const priceEl = document.querySelector('.product-price');
+        const imgEl = document.getElementById('productMainImg');
+        const id = urlParams.get('id') || 'fresh-1';
+        const title = (titleEl && titleEl.textContent) ? titleEl.textContent.trim() : '安岳新鲜柠檬';
+        const price = (priceEl && priceEl.textContent) ? priceEl.textContent.trim() : '¥19.90';
+        const image = (imgEl && imgEl.src) ? imgEl.src : '';
+        const q = new URLSearchParams({ id: id, title: title, price: price });
+        // 用时间戳标识一次“发起咨询”，避免客服页刷新重复发送
+        q.set('ts', String(Date.now()));
+        if (image) q.set('image', image);
+        window.location.href = 'customer_service.html?' + q.toString();
+      });
+
+      // 获取当前商品ID
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get('id') || 'fresh-1';
+
+      // 标签页切换功能
+      document.querySelectorAll('.product-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          const targetTab = this.dataset.tab;
+          
+          // 更新标签页状态
+          document.querySelectorAll('.product-tab').forEach(t => {
+            t.classList.remove('active');
+          });
+          this.classList.add('active');
+          
+          // 更新内容显示
+          document.querySelectorAll('.product-tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          document.getElementById(targetTab + 'Content').classList.add('active');
+        });
+      });
+
+      // 评论功能
+      const CommentManager = {
+        // 获取评论存储key
+        getStorageKey() {
+          return `anyue_lemon:comments:${productId}`;
+        },
+        
+        // 获取评论列表
+        getComments() {
+          try {
+            const raw = localStorage.getItem(this.getStorageKey());
+            return raw ? JSON.parse(raw) : [];
+          } catch {
+            return [];
+          }
+        },
+        
+        // 保存评论列表
+        saveComments(comments) {
+          localStorage.setItem(this.getStorageKey(), JSON.stringify(comments));
+        },
+        
+        // 添加评论
+        addComment(rating, content) {
+          const comments = this.getComments();
+          const user = JSON.parse(localStorage.getItem('user') || '{"name":"匿名用户"}');
+          const username = user.name || user.phone || '匿名用户';
+          
+          const newComment = {
+            id: Date.now(),
+            username: username,
+            rating: rating,
+            content: content,
+            date: new Date().toISOString(),
+            likes: 0
+          };
+          
+          comments.unshift(newComment); // 最新评论在前
+          this.saveComments(comments);
+          return newComment;
+        },
+        
+        // 删除评论
+        deleteComment(commentId) {
+          const comments = this.getComments();
+          const filtered = comments.filter(c => c.id !== commentId);
+          this.saveComments(filtered);
+        },
+        
+        // 点赞评论
+        likeComment(commentId) {
+          const comments = this.getComments();
+          const comment = comments.find(c => c.id === commentId);
+          if (comment) {
+            comment.likes = (comment.likes || 0) + 1;
+            this.saveComments(comments);
+          }
+        },
+        
+        // 格式化日期
+        formatDate(dateString) {
+          const date = new Date(dateString);
+          const now = new Date();
+          const diff = now - date;
+          const minutes = Math.floor(diff / 60000);
+          const hours = Math.floor(diff / 3600000);
+          const days = Math.floor(diff / 86400000);
+          
+          if (minutes < 1) return '刚刚';
+          if (minutes < 60) return `${minutes}分钟前`;
+          if (hours < 24) return `${hours}小时前`;
+          if (days < 7) return `${days}天前`;
+          
+          return date.toLocaleDateString('zh-CN', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit' 
+          });
+        },
+        
+        // 渲染评论列表
+        renderComments() {
+          const commentList = document.getElementById('commentList');
+          const comments = this.getComments();
+          
+          if (comments.length === 0) {
+            commentList.innerHTML = `
+              <div class="comment-empty">
+                <div class="comment-empty__icon">💬</div>
+                <div class="comment-empty__text">暂无评论，快来发表第一条评论吧！</div>
+              </div>
+            `;
+            return;
+          }
+          
+          commentList.innerHTML = comments.map(comment => {
+            const stars = '★'.repeat(comment.rating) + '☆'.repeat(5 - comment.rating);
+            const firstChar = comment.username.charAt(0).toUpperCase();
+            
+            return `
+              <div class="comment-item" data-id="${comment.id}">
+                <div class="comment-header">
+                  <div class="comment-user">
+                    <div class="comment-avatar">${firstChar}</div>
+                    <div class="comment-user-info">
+                      <div class="comment-username">${comment.username}</div>
+                      <div class="comment-rating">
+                        ${stars.split('').map((star, i) => 
+                          `<span class="comment-rating-star">${star}</span>`
+                        ).join('')}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="comment-date">${this.formatDate(comment.date)}</div>
+                </div>
+                <div class="comment-content">${comment.content}</div>
+                <div class="comment-actions">
+                  <span class="comment-action" onclick="CommentManager.likeComment(${comment.id}); CommentManager.renderComments();">
+                    👍 有用 (${comment.likes || 0})
+                  </span>
+                  ${comment.username === (JSON.parse(localStorage.getItem('user') || '{}').name || '') ? 
+                    `<span class="comment-action" onclick="if(confirm('确定要删除这条评论吗？')) { CommentManager.deleteComment(${comment.id}); CommentManager.renderComments(); }" style="color: #f44336;">删除</span>` : 
+                    ''}
+                </div>
+              </div>
+            `;
+          }).join('');
+        },
+        
+        // 初始化
+        init() {
+          // 评分星星交互
+          let selectedRating = 0;
+          const stars = document.querySelectorAll('.comment-form__star');
+          const ratingText = document.getElementById('ratingText');
+          const ratingTexts = ['', '很差', '较差', '一般', '较好', '很好'];
+          
+          stars.forEach((star, index) => {
+            star.addEventListener('mouseenter', function() {
+              const rating = parseInt(this.dataset.rating);
+              stars.forEach((s, i) => {
+                s.textContent = i < rating ? '★' : '☆';
+                s.classList.toggle('active', i < rating);
+              });
+              ratingText.textContent = ratingTexts[rating] || '';
+            });
+            
+            star.addEventListener('click', function() {
+              selectedRating = parseInt(this.dataset.rating);
+              stars.forEach((s, i) => {
+                s.textContent = i < selectedRating ? '★' : '☆';
+                s.classList.toggle('active', i < selectedRating);
+              });
+              ratingText.textContent = ratingTexts[selectedRating] || '';
+            });
+          });
+          
+          document.querySelector('.comment-form__stars').addEventListener('mouseleave', function() {
+            stars.forEach((s, i) => {
+              s.textContent = i < selectedRating ? '★' : '☆';
+              s.classList.toggle('active', i < selectedRating);
+            });
+            ratingText.textContent = selectedRating > 0 ? ratingTexts[selectedRating] : '请选择评分';
+          });
+          
+          // 字符计数
+          const commentInput = document.getElementById('commentInput');
+          const charCount = document.getElementById('charCount');
+          commentInput.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+          });
+          
+          // 提交评论
+          document.getElementById('submitComment').addEventListener('click', function() {
+            const content = commentInput.value.trim();
+            
+            if (selectedRating === 0) {
+              alert('请先选择评分！');
+              return;
+            }
+            
+            if (!content) {
+              alert('请输入评论内容！');
+              return;
+            }
+            
+            if (content.length < 5) {
+              alert('评论内容至少需要5个字符！');
+              return;
+            }
+            
+            // 添加评论
+            CommentManager.addComment(selectedRating, content);
+            
+            // 重置表单
+            commentInput.value = '';
+            charCount.textContent = '0';
+            selectedRating = 0;
+            stars.forEach(s => {
+              s.textContent = '☆';
+              s.classList.remove('active');
+            });
+            ratingText.textContent = '请选择评分';
+            
+            // 重新渲染评论列表
+            CommentManager.renderComments();
+            
+            alert('评论发表成功！');
+          });
+          
+          // 初始渲染评论列表
+          this.renderComments();
+        }
+      };
+      
+      // 收藏按钮点击事件 - 使用统一的收藏逻辑
+      const favoriteBtn = document.getElementById('favorite-btn');
+      if (favoriteBtn) {
+        function checkFavoriteStatus() {
+          try {
+            const storageKey = (window.STORAGE_KEYS && window.STORAGE_KEYS.favorites) || "anyue_lemon:favorites";
+            const raw = localStorage.getItem(storageKey);
+            const favs = new Set(raw ? JSON.parse(raw) : []);
+            const isFavorite = favs.has(productId);
+            favoriteBtn.setAttribute('aria-pressed', String(isFavorite));
+            updateFavoriteButton(isFavorite);
+          } catch {
+            favoriteBtn.setAttribute('aria-pressed', 'false');
+            updateFavoriteButton(false);
+          }
+        }
+        
+        function updateFavoriteButton(isFavorite) {
+          const starIcon = favoriteBtn.querySelector('.star-icon');
+          const favoriteText = favoriteBtn.querySelector('.favorite-text');
+          if (starIcon) {
+            starIcon.textContent = isFavorite ? '★' : '☆';
+          }
+          if (favoriteText) {
+            favoriteText.textContent = isFavorite ? '已收藏' : '收藏';
+          }
+        }
+        
+        favoriteBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          try {
+            const storageKey = (window.STORAGE_KEYS && window.STORAGE_KEYS.favorites) || "anyue_lemon:favorites";
+            const raw = localStorage.getItem(storageKey);
+            const favs = new Set(raw ? JSON.parse(raw) : []);
+            const currentState = favoriteBtn.getAttribute('aria-pressed') === 'true';
+            const nextState = !currentState;
+            
+            favoriteBtn.setAttribute('aria-pressed', String(nextState));
+            updateFavoriteButton(nextState);
+            
+            if (nextState) {
+              favs.add(productId);
+              // 触发自定义事件，通知其他页面更新
+              window.dispatchEvent(new CustomEvent('favoritesUpdated', { detail: { productId: productId, action: 'add' } }));
+            } else {
+              favs.delete(productId);
+              // 触发自定义事件，通知其他页面更新
+              window.dispatchEvent(new CustomEvent('favoritesUpdated', { detail: { productId: productId, action: 'remove' } }));
+            }
+            
+            localStorage.setItem(storageKey, JSON.stringify([...favs]));
+          } catch (error) {
+            console.error('收藏操作失败:', error);
+            alert('收藏操作失败，请重试！');
+          }
+        });
+        
+        // 初始化检查
+        checkFavoriteStatus();
+      }
+      
+      // 初始化评论功能
+      CommentManager.init();
+
+      // 从后端或本地数据加载商品详情和规格
+      function applyProductToPage(p) {
+        if (!p) return;
+        const titleEl = document.querySelector('.product-title');
+        const priceEl = document.querySelector('.product-price');
+        const mainImgEl = document.getElementById('productMainImg');
+        const thumbsEl = document.getElementById('productThumbs');
+        const descEl = document.querySelector('.description-content');
+        if (titleEl) titleEl.textContent = p.title || '';
+        if (priceEl) {
+          const fmt = window.formatPrice || function(n) { return '¥' + Number(n).toFixed(1); };
+          priceEl.textContent = fmt(p.price ?? 0);
+        }
+        function normalizeImageList(x) {
+          const out = [];
+          if (Array.isArray(x)) {
+            x.forEach((u) => {
+              if (u) out.push(String(u).trim());
+            });
+          } else if (typeof x === 'string' && x.trim()) {
+            x.split(/\r?\n|,/).forEach((u) => {
+              if (u && String(u).trim()) out.push(String(u).trim());
+            });
+          }
+          if (p.img) out.unshift(String(p.img).trim());
+          return [...new Set(out.filter(Boolean))];
+        }
+
+        function renderGallery(urls, activeUrl) {
+          if (!mainImgEl) return;
+          const list = (urls && urls.length) ? urls : (p.img ? [p.img] : []);
+          const active = activeUrl || list[0] || '';
+          if (active) mainImgEl.src = active;
+          if (!thumbsEl) return;
+
+          thumbsEl.innerHTML = list
+            .map((url) => {
+              const isActive = url === active;
+              return `
+                <button class="product-thumb${isActive ? ' active' : ''}" type="button" data-url="${escapeHtml(url)}" aria-label="切换图片">
+                  <img src="${escapeHtml(url)}" alt="商品缩略图" loading="lazy" />
+                </button>
+              `;
+            })
+            .join('');
+
+          thumbsEl.querySelectorAll('.product-thumb').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const url = btn.getAttribute('data-url') || '';
+              if (url) {
+                mainImgEl.src = url;
+                thumbsEl.querySelectorAll('.product-thumb').forEach((b) => b.classList.remove('active'));
+                btn.classList.add('active');
+              }
+            });
+          });
+        }
+
+        renderGallery(normalizeImageList(p.images), p.img || '');
+        
+        // 渲染详情 Tab 内容 (属性表格 + 文字描述 + 海报)
+        if (descEl) {
+            let html = '';
+            
+            // 1. 属性表格
+            if (p.detailAttributes && Array.isArray(p.detailAttributes) && p.detailAttributes.length > 0) {
+              html += `<div class="detail-attributes-table">`;
+              p.detailAttributes.forEach(attr => {
+                html += `
+                  <div class="detail-attribute-row">
+                    <div class="detail-attribute-name">${escapeHtml(attr.name)}</div>
+                    <div class="detail-attribute-value">${escapeHtml(attr.value)}</div>
+                  </div>
+                `;
+              });
+              html += `</div>`;
+            }
+
+            // 2. 文字描述 - 已禁用
+            /*
+            if (p.desc || p.description || p.detail) {
+               const text = p.desc || p.description || p.detail || '';
+               // 如果没有属性和图片，保持原有简单的段落分割逻辑
+               if ((!p.detailAttributes || p.detailAttributes.length === 0) && (!p.detailImages || p.detailImages.length === 0)) {
+                   const paragraphs = String(text).split(/\n{2,}|\r?\n/).filter(Boolean);
+                   html += paragraphs.map(t => `<p>${t}</p>`).join('');
+               } else {
+                   // 否则作为详情的一部分
+                   html += `<div class="description-text" style="margin-bottom:24px;line-height:1.8;">${escapeHtml(text)}</div>`;
+               }
+            }
+            */
+
+            // 3. 详情海报
+            if (p.detailImages && Array.isArray(p.detailImages) && p.detailImages.length > 0) {
+              html += `<div class="detail-images">`;
+              p.detailImages.forEach(url => {
+                html += `<img src="${url}" alt="详情海报" loading="lazy" />`;
+              });
+              html += `</div>`;
+            }
+            
+            if (html) {
+                descEl.innerHTML = html;
+                // 重置容器样式以适应全宽图片和表格
+                descEl.style.padding = '0';
+                descEl.style.background = 'transparent';
+                descEl.style.boxShadow = 'none';
+            }
+        }
+
+        // 新结构：attributes = [{groupId,name,values:[{id,value}]}] + skus = [{id,price,stock,img,values:[{valueId,groupId,...}]}]
+        const attributes = p.attributes || [];
+        const skus = p.skus || [];
+        let simpleSpecs = p.specs || [];
+
+        // 如果没有 specs 数据但有 skus 数据（且 skus 包含 values 结构），尝试从 skus 反推 specs
+        // 这样可以确保即使数据缺失，也能展示为“规格分组”样式（图二样式），而不是回退到长列表（图一样式）
+        if ((!simpleSpecs || simpleSpecs.length === 0) && skus.length > 0) {
+          const groupMap = new Map(); // groupName -> Set(values)
+          // 同时也收集图片：value -> imgUrl (如果 SKU 刚好是单规格或者我们能推断出图片)
+          // 这里简化处理：只收集文本值
+          skus.forEach(sku => {
+             if (sku.values && Array.isArray(sku.values)) {
+               sku.values.forEach(v => {
+                 const gName = v.groupName;
+                 const val = v.value;
+                 if (gName && val) {
+                   if (!groupMap.has(gName)) {
+                     groupMap.set(gName, new Set());
+                   }
+                   groupMap.get(gName).add(val);
+                 }
+               });
+             }
+          });
+          
+          if (groupMap.size > 0) {
+            simpleSpecs = [];
+            groupMap.forEach((valSet, gName) => {
+              const values = Array.from(valSet).map(v => ({ value: v }));
+              simpleSpecs.push({ name: gName, values: values });
+            });
+          }
+        }
+
+        // 渲染“规格列表”（仿淘宝右侧列表）
+        const skuListEl = document.getElementById('skuList');
+        const skuItemsEl = document.getElementById('skuItems');
+
+        // 优先使用 simpleSpecs 渲染UI，因为我们只维护了 simpleSpecs 和 flat skus
+        // 如果后端还没有正式 sku 结构，但有我们在后台录入的简单 specs，就用 specs 渲染一个“伪规格列表”
+        if (skuListEl && skuItemsEl && simpleSpecs.length > 0) {
+          skuListEl.hidden = false;
+          const fmt = window.formatPrice || function(n) { return '¥' + Number(n).toFixed(1); };
+          // 规格组总标题区域不再单独显示具体组名，组名在每一行左侧展示（颜色 / 总量等）
+          const groupLabelEl = document.getElementById('skuGroupName');
+          if (groupLabelEl) {
+            groupLabelEl.textContent = '';
+          }
+          const groupsHtml = [];
+          simpleSpecs.forEach((g, gi) => {
+            const groupName = g && g.name ? String(g.name) : '';
+            const valueButtons = [];
+            (g.values || []).forEach((v, vi) => {
+              const valueText = v && v.value ? String(v.value) : '';
+              const imgUrl = v && v.img ? String(v.img) : '';
+              const name = valueText || '规格';
+              const subText = groupName || '可选规格';
+              valueButtons.push(`
+                <button class="sku-item sku-item--simple" type="button"
+                  data-spec-group-index="${gi}"
+                  data-spec-value-index="${vi}"
+                  data-spec-group-name="${escapeHtml(groupName)}"
+                  data-spec-value-name="${escapeHtml(name)}"
+                  data-spec-img="${escapeHtml(imgUrl)}">
+                  <span class="sku-item__left">
+                    ${imgUrl ? `
+                      <span class="sku-item__thumb">
+                        <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(name)}" />
+                      </span>
+                    ` : ''}
+                    <span class="sku-item__texts">
+                      <span class="sku-item__name">${escapeHtml(name)}</span>
+                      <span class="sku-item__sub">${escapeHtml(subText)}</span>
+                    </span>
+                  </span>
+                </button>
+              `);
+            });
+            // 每个规格组一行：左侧是“颜色/总量”，右侧是该组下所有选项
+            if (valueButtons.length) {
+              groupsHtml.push(`
+                <div class="sku-group">
+                  <div class="sku-group__label">${escapeHtml(groupName || '规格')}</div>
+                  <div class="sku-group__body">
+                    ${valueButtons.join('')}
+                  </div>
+                </div>
+              `);
+            }
+          });
+          skuItemsEl.innerHTML = groupsHtml.join('');
+
+          const mainImgEl = document.getElementById('productMainImg');
+          const fmtPrice = window.formatPrice || function(n) { return '¥' + Number(n).toFixed(1); };
+          const priceEl = document.querySelector('.product-price');
+
+          // 只在同一规格组内高亮当前选中的一项
+          function highlightSimpleRow(btn) {
+            if (!btn) return;
+            const groupIndex = btn.getAttribute('data-spec-group-index');
+            if (!groupIndex) return;
+            skuItemsEl
+              .querySelectorAll(`.sku-item[data-spec-group-index="${groupIndex}"]`)
+              .forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
+
+          // 尝试查找匹配的 SKU 数据
+          function findMatchingSku() {
+            if (!skus || skus.length === 0) return null;
+            // 收集当前选中的规格值
+            const currentselections = [];
+            skuItemsEl.querySelectorAll('.sku-item.active').forEach(btn => {
+               currentselections.push({
+                 group: btn.getAttribute('data-spec-group-name'),
+                 value: btn.getAttribute('data-spec-value-name')
+               });
+            });
+            
+            // 在 skus 中查找完全匹配的项
+            return skus.find(sku => {
+               if (!sku.values || sku.values.length === 0) return false;
+               // 检查每一个选中项是否在 sku.values 中存在
+               // 同时也应检查 sku.values 是否都在选中项中（严格匹配），或者至少包含所有选中项
+               // 考虑到可能只选了部分，我们做“最佳匹配”：所有选中的都必须符合
+               return currentselections.every(sel => {
+                 return sku.values.some(v => v.groupName === sel.group && v.value === sel.value);
+               });
+            });
+          }
+
+          skuItemsEl.querySelectorAll('.sku-item').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              highlightSimpleRow(btn);
+              
+              // 1. 优先尝试从 SKU 组合中找图
+              let targetImg = '';
+              let targetPrice = null;
+              
+              const matchedSku = findMatchingSku();
+              if (matchedSku) {
+                if (matchedSku.img) targetImg = matchedSku.img;
+                if (matchedSku.price != null) targetPrice = matchedSku.price;
+              }
+              
+              // 2. 如果没有 SKU 图，回退到规格值自带图
+              if (!targetImg) {
+                 targetImg = btn.getAttribute('data-spec-img') || '';
+              }
+
+              if (targetImg && mainImgEl) {
+                mainImgEl.src = targetImg;
+              }
+              if (targetPrice != null && priceEl) {
+                priceEl.textContent = fmtPrice(targetPrice);
+              } else if (priceEl) {
+                priceEl.textContent = fmtPrice(p.price ?? 0);
+              }
+            });
+          });
+
+          // 默认每个规格组高亮第一项，保证所有规格都有一个默认选择
+          const firstPerGroup = {};
+          skuItemsEl.querySelectorAll('.sku-item').forEach((btn) => {
+            const gi = btn.getAttribute('data-spec-group-index');
+            if (gi != null && !(gi in firstPerGroup)) {
+              firstPerGroup[gi] = btn;
+            }
+          });
+          Object.values(firstPerGroup).forEach((btn) => {
+            highlightSimpleRow(btn);
+          });
+          
+          // 初始加载时也尝试一次匹配（更新价格/图片）
+          setTimeout(() => {
+             const matchedSku = findMatchingSku();
+             if (matchedSku) {
+               if (matchedSku.img && mainImgEl) mainImgEl.src = matchedSku.img;
+               if (matchedSku.price != null && priceEl) priceEl.textContent = fmtPrice(matchedSku.price);
+             }
+          }, 0);
+
+          // 使用简单规格时，后面的 sku 逻辑直接跳过
+          return;
+        }
+
+        // 当前选中的 sku（由列表控制）
+        let selectedSku = skus && skus.length ? skus[0] : null;
+
+        // 构建 valueId -> 文本 映射，用于拼接 SKU 名称
+        const valueTextMap = {};
+        attributes.forEach((g) => {
+          (g.values || []).forEach((v) => {
+            valueTextMap[String(v.id)] = v.value || '';
+          });
+        });
+
+        function skuDisplayName(sku) {
+          const ids = (sku.values || []).map((v) => String(v.valueId)).filter(Boolean);
+          const parts = ids.map((id) => valueTextMap[id]).filter(Boolean);
+          return parts.length ? parts.join(' / ') : (sku.skuName || '标准规格');
+        }
+
+        function highlightSkuRow(skuId) {
+          if (!skuItemsEl) return;
+          skuItemsEl.querySelectorAll('.sku-item').forEach((btn) => {
+            btn.classList.toggle('active', String(btn.dataset.skuId) === String(skuId));
+          });
+        }
+
+        if (skuListEl && skuItemsEl && skus.length > 0) {
+          skuListEl.hidden = false;
+          const fmt = window.formatPrice || function(n) { return '¥' + Number(n).toFixed(1); };
+          skuItemsEl.innerHTML = skus.map((s, idx) => {
+            const name = skuDisplayName(s);
+            const priceText = fmt(s.price ?? p.price ?? 0);
+            const sub = (s.stock != null) ? `库存 ${s.stock}` : (s.sales != null ? `销量 ${s.sales}` : '可选规格');
+            return `
+              <button class="sku-item${idx === 0 ? ' active' : ''}" type="button" data-sku-id="${escapeHtml(String(s.id || idx))}">
+                <span class="sku-item__left">
+                  <span class="sku-item__name">${escapeHtml(name)}</span>
+                  <span class="sku-item__sub">${escapeHtml(sub)}</span>
+                </span>
+                <span class="sku-item__right">${escapeHtml(priceText)}</span>
+              </button>
+            `;
+          }).join('');
+
+          // 点击规格行：同步 option pills + 价格/主图
+          skuItemsEl.querySelectorAll('.sku-item').forEach((btn, idx) => {
+            btn.addEventListener('click', () => {
+              const sku = skus[idx];
+              if (!sku) return;
+              selectedSku = sku;
+              highlightSkuRow(btn.dataset.skuId);
+              // 触发 UI 更新
+              applySkuToUI();
+            });
+          });
+        } else if (skuListEl) {
+          skuListEl.hidden = true;
+        }
+
+        function applySkuToUI() {
+          const priceEl = document.querySelector('.product-price');
+          const imgEl = document.getElementById('productMainImg');
+          if (!priceEl) return;
+          const fmt = window.formatPrice || function(n) { return '¥' + Number(n).toFixed(1); };
+          if (selectedSku) {
+            priceEl.textContent = fmt(selectedSku.price ?? 0);
+            // SKU 图片仅切换主图，不重建缩略图列表
+            if (imgEl && selectedSku.img) {
+              imgEl.src = selectedSku.img;
+              const thumbsEl = document.getElementById('productThumbs');
+              if (thumbsEl) {
+                thumbsEl.querySelectorAll('.product-thumb').forEach((b) => b.classList.remove('active'));
+              }
+            }
+            // 同步高亮规格列表
+            if (selectedSku.id != null) {
+              highlightSkuRow(selectedSku.id);
+            }
+          } else {
+            // 没匹配到：回退基础价/主图
+            priceEl.textContent = fmt(p.price ?? 0);
+            if (imgEl && p.img) imgEl.src = p.img;
+          }
+        }
+
+        applySkuToUI();
+        // 默认高亮第一条 sku
+        if (skus.length > 0) {
+          highlightSkuRow(skus[0].id ?? 0);
+        }
+      }
+
+      function loadProductDetail() {
+        const hasBackend = typeof BACKEND_BASE_URL !== 'undefined';
+        if (hasBackend) {
+          fetch(`${BACKEND_BASE_URL}/api/products/${encodeURIComponent(productId)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.ok && data.item) {
+                applyProductToPage(data.item);
+              } else {
+                loadProductFromLocal();
+              }
+            })
+            .catch(() => {
+              loadProductFromLocal();
+            });
+        } else {
+          loadProductFromLocal();
+        }
+      }
+
+      function loadProductFromLocal() {
+        const source = (window.productsFromServer && window.productsFromServer.length)
+          ? window.productsFromServer
+          : (window.PRODUCTS || []);
+        const p = source.find(item => item.id === productId);
+        applyProductToPage(p);
+      }
+
+      // 初始化规格与详情
+      loadProductDetail();
+    </script>
+  </body>
+</html>

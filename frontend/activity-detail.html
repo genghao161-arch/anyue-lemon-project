@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>活动详情 · 石刻护柠</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .activity-detail {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
+      
+      .activity-header {
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 12px rgba(33, 24, 10, 0.06);
+        text-align: center;
+      }
+      
+      .activity-header__badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border-radius: 16px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      
+      .activity-header__badge--ended {
+        background: rgba(160, 140, 90, 0.3);
+        color: var(--muted);
+      }
+      
+      .activity-header__title {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 12px 0;
+      }
+      
+      .activity-header__subtitle {
+        font-size: 16px;
+        color: var(--muted);
+        margin: 0 0 20px 0;
+      }
+      
+      .activity-header__meta {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        font-size: 14px;
+        color: var(--muted);
+        flex-wrap: wrap;
+      }
+      
+      .activity-content {
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 12px rgba(33, 24, 10, 0.06);
+      }
+      
+      .activity-content__title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 20px 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(160, 140, 90, 0.15);
+      }
+      
+      .activity-content__text {
+        font-size: 14px;
+        line-height: 1.8;
+        color: var(--ink);
+        margin-bottom: 20px;
+      }
+      
+      /* 投票区域 */
+      .vote-section {
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 12px rgba(33, 24, 10, 0.06);
+      }
+      
+      .vote-section__title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 24px 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(160, 140, 90, 0.15);
+      }
+      
+      .vote-products {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      
+      .vote-product-card {
+        background: rgba(247, 243, 234, 0.5);
+        border: 2px solid rgba(160, 140, 90, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+      }
+      
+      .vote-product-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(200, 176, 106, 0.2);
+      }
+      
+      .vote-product-card--selected {
+        border-color: var(--accent);
+        background: rgba(200, 176, 106, 0.15);
+      }
+      
+      .vote-product-card__image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, rgba(200, 176, 106, 0.2), rgba(200, 176, 106, 0.1));
+      }
+      
+      .vote-product-card__title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 8px 0;
+      }
+      
+      .vote-product-card__desc {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0 0 12px 0;
+        line-height: 1.5;
+      }
+      
+      .vote-product-card__vote-count {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--accent2);
+        margin-bottom: 8px;
+      }
+      
+      .vote-product-card__progress {
+        width: 100%;
+        height: 6px;
+        background: rgba(160, 140, 90, 0.2);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      
+      .vote-product-card__progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        border-radius: 3px;
+        transition: width 0.5s ease;
+      }
+      
+      .vote-product-card__check {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        background: var(--accent);
+        color: white;
+        border-radius: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      .vote-product-card--selected .vote-product-card__check {
+        display: flex;
+      }
+      
+      .vote-summary {
+        background: rgba(247, 243, 234, 0.5);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 24px;
+      }
+      
+      .vote-summary__title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 16px 0;
+      }
+      
+      .vote-summary__total {
+        font-size: 14px;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      
+      .vote-summary__total strong {
+        color: var(--accent2);
+        font-size: 18px;
+      }
+      
+      .vote-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+      }
+      
+      .vote-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(200, 176, 106, 0.3);
+      }
+      
+      .vote-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .vote-message {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        text-align: center;
+      }
+      
+      .vote-message--success {
+        background: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+        border: 1px solid rgba(76, 175, 80, 0.3);
+      }
+      
+      .vote-message--info {
+        background: rgba(33, 150, 243, 0.1);
+        color: #2196f3;
+        border: 1px solid rgba(33, 150, 243, 0.3);
+      }
+      
+      @media (max-width: 768px) {
+        .vote-products {
+          grid-template-columns: 1fr;
+        }
+        
+        .activity-header {
+          padding: 24px 20px;
+        }
+        
+        .activity-header__title {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item nav__item--active" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page">
+      <section class="container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="javascript:void(0)" onclick="history.back(); return false;" style="color: var(--accent2); text-decoration: none; cursor: pointer;">&lt; 返回</a>
+            <a href="activate.html" style="color: var(--accent2); text-decoration: none;">活动中心</a>
+          </div>
+        </div>
+
+        <div class="activity-detail" id="activityDetail">
+          <!-- 活动内容将通过JavaScript动态加载 -->
+        </div>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/activities.js"></script>
+    <script>
+      // 获取活动ID
+      const urlParams = new URLSearchParams(window.location.search);
+      const activityId = urlParams.get('id'); // Removed default fallback to force dynamic check
+      
+      // 获取用户ID（用于投票）
+      function getUserId() {
+        const user = localStorage.getItem('user');
+        if (user) {
+          try {
+            const userData = JSON.parse(user);
+            return userData.phone || userData.id || 'anonymous';
+          } catch {
+            return 'anonymous';
+          }
+        }
+        return 'anonymous';
+      }
+      
+      // 渲染活动详情
+      function renderActivityDetail(data) {
+        const activityDetail = document.getElementById('activityDetail');
+        if (!activityDetail) return;
+        
+        let activity = null;
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+            // Single object
+            if (data.id === activityId) activity = data;
+        } else if (Array.isArray(data)) {
+            // Array
+            activity = data.find(a => a.id === activityId);
+        }
+        
+        // Fallback to global if not found in args
+        if (!activity) {
+            activity = (window.ACTIVITIES || []).find(a => a.id === activityId);
+        }
+
+        if (!activity) {
+          activityDetail.innerHTML = `
+            <div class="card" style="text-align: center; padding: 60px 20px;">
+              <p style="color: var(--muted);">活动不存在或已下架</p>
+              <a href="activate.html" style="display: inline-block; margin-top: 16px; color: var(--accent2);">返回活动列表</a>
+            </div>
+          `;
+          return;
+        }
+        
+        const badgeClass = activity.status === 'ended' ? 'activity-header__badge--ended' : '';
+        const badgeText = activity.status === 'active' ? '进行中' : 
+                         activity.status === 'ended' ? '已结束' : '即将开始';
+        
+        // 海报图片 HTML
+        const posterHtml = activity.poster ? 
+          `<div class="activity-poster" style="margin-bottom: 24px; text-align: center;">
+             <img src="${activity.poster}" alt="活动海报" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+           </div>` : '';
+
+        const contentHTML = `
+            <div class="activity-header">
+              <span class="activity-header__badge ${badgeClass}">${badgeText}</span>
+              <h1 class="activity-header__title">${activity.title}</h1>
+              <p class="activity-header__subtitle">${activity.subtitle}</p>
+              <div class="activity-header__meta">
+                <span>📅 ${activity.startDate} - ${activity.endDate}</span>
+                <span>👀 ${activity.clickCount || 0} 次点击</span>
+              </div>
+            </div>
+            
+            <div class="activity-content">
+              ${posterHtml}
+              <h2 class="activity-content__title">活动详情</h2>
+              <div class="activity-content__text">
+                ${activity.description}
+              </div>
+            </div>
+          `;
+        
+        activityDetail.innerHTML = contentHTML;
+      }
+      
+      document.addEventListener('DOMContentLoaded', function() {
+        // 先尝试用本地数据渲染（如果有）
+        if (window.ACTIVITIES && window.ACTIVITIES.length > 0) {
+           renderActivityDetail(window.ACTIVITIES);
+        }
+        
+        // 获取后端数据
+        const API_BASE = typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : 'http://localhost:8000';
+        // 尝试获取单个活动详情（包含点击数增加逻辑）
+        fetch(`${API_BASE}/api/activities/${activityId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.ok && data.item) {
+              // 更新全局数据以便投票逻辑使用
+              if (!window.ACTIVITIES) window.ACTIVITIES = [];
+              const idx = window.ACTIVITIES.findIndex(a => a.id === data.item.id);
+              if (idx >= 0) {
+                  window.ACTIVITIES[idx] = data.item;
+              } else {
+                  window.ACTIVITIES.push(data.item);
+              }
+              renderActivityDetail(data.item);
+            } else {
+                // 如果获取单个失败，尝试获取列表（兼容旧后端或列表缓存）
+                throw new Error('Detail fetch failed');
+            }
+          })
+          .catch(err => {
+            console.log('Fetching detail directly failed, trying list...', err);
+            fetch(`${API_BASE}/api/activities`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.ok && Array.isArray(data.items)) {
+                  window.ACTIVITIES = data.items;
+                  renderActivityDetail(data.items);
+                }
+              })
+              .catch(e => {
+                 console.error('加载活动详情失败:', e);
+                 if (!window.ACTIVITIES || window.ACTIVITIES.length === 0) {
+                      renderActivityDetail([]);
+                 }
+              });
+          });
+      });
+    </script>
+  </body>
+</html>

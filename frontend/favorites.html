@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的收藏 · 石刻护柠</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .favorites-container {
+        margin: 30px 0;
+      }
+      .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 24px 0;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: #f8f8f8;
+        border-radius: 12px;
+      }
+      .empty-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 8px 0;
+      }
+      .empty-desc {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0 0 24px 0;
+      }
+      .empty-btn {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .empty-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .favorites-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+      }
+      @media (max-width: 980px) {
+        .favorites-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 620px) {
+        .favorites-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      
+      /* 使用与首页相同的商品卡片样式 */
+      .favorite-item {
+        background: rgba(255,255,255,.18);
+        border: 1px solid rgba(160,140,90,.32);
+        border-radius: 12px;
+        box-shadow: var(--shadow2);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .favorite-item:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        border-color: rgba(200, 176, 106, 0.5);
+      }
+      .favorite-image {
+        position: relative;
+        height: 220px;
+        background: linear-gradient(135deg, rgba(200,176,106,.22), rgba(255,255,255,.08));
+        border-radius: 12px 12px 0 0;
+        overflow: hidden;
+      }
+      .favorite-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: saturate(1.03) contrast(1.03);
+        transition: all 0.3s ease;
+      }
+      .favorite-item:hover .favorite-image img {
+        transform: scale(1.05);
+        filter: saturate(1.1) contrast(1.05);
+      }
+      .favorite-tag {
+        position: absolute;
+        left: 14px;
+        top: 12px;
+        background: rgba(25,18,7,.62);
+        color: rgba(255,255,255,.92);
+        padding: 6px 10px;
+        font-size: 13px;
+        letter-spacing: .16em;
+        border-radius: 4px;
+      }
+      .favorite-badge {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        border: none;
+        background: rgba(255, 193, 7, 0.15);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: inherit;
+        z-index: 2;
+      }
+      .favorite-badge:hover {
+        transform: translateY(-2px) scale(1.05);
+        background: rgba(255, 193, 7, 0.25);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+      }
+      .favorite-badge .star-icon {
+        color: #ffc107;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        display: inline-block;
+        transform: scale(1.1);
+      }
+      .favorite-badge .favorite-text {
+        color: rgba(25, 18, 7, 0.85);
+        font-size: 13px;
+        font-weight: 600;
+        transition: color 0.3s ease;
+      }
+      .favorite-info {
+        padding: 14px 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .favorite-title {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: .06em;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .favorite-desc {
+        margin: 0;
+        color: rgba(40, 30, 14, .58);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+      .favorite-meta {
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .favorite-price {
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Microsoft YaHei", sans-serif;
+        font-weight: 700;
+        letter-spacing: .04em;
+        color: rgba(25,18,7,.85);
+        font-size: 18px;
+        margin: 0;
+      }
+      .favorite-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .action-btn {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1px solid rgba(160,140,90,.35);
+        background: rgba(255,255,255,.22);
+        color: rgba(25,18,7,.72);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .action-btn:hover {
+        background: rgba(255,255,255,.34);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: rgba(200, 176, 106, 0.5);
+      }
+      .action-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .action-btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+      }
+      .action-btn-primary:hover {
+        background: linear-gradient(135deg, var(--accent2), #8a7540);
+        box-shadow: 0 4px 12px rgba(160, 140, 90, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回商品页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page">
+      <section class="container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="index.html" style="color: var(--accent2); text-decoration: none;">&lt; 返回</a>
+            <a href="index.html" style="color: var(--accent2); text-decoration: none;">首页</a>
+          </div>
+        </div>
+
+        <div class="favorites-container">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <h1 class="section-title" style="margin: 0;">我的收藏</h1>
+            <button onclick="location.reload()" style="padding: 8px 16px; background: rgba(200, 176, 106, 0.2); border: 1px solid rgba(200, 176, 106, 0.4); border-radius: 8px; color: var(--accent2); cursor: pointer; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(200, 176, 106, 0.3)'" onmouseout="this.style.background='rgba(200, 176, 106, 0.2)'">刷新</button>
+          </div>
+          
+          <div id="favoritesGrid" class="favorites-grid"></div>
+          
+          <div id="emptyState" class="empty-state">
+            <h2 class="empty-title">暂无收藏商品</h2>
+            <p class="empty-desc">快去浏览商品并收藏喜欢的商品吧！</p>
+            <button class="empty-btn" onclick="window.location.href='index.html'">去浏览商品</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+      // 获取商品数据 - 优先使用 main.js 中的，否则使用备用数据
+      function getProducts() {
+        if (window.PRODUCTS && window.PRODUCTS.length > 0) {
+          return window.PRODUCTS;
+        }
+        // 备用商品数据
+        return [
+        {
+          id: "fresh-1",
+          category: "fresh",
+          tag: "鲜柠檬",
+          title: "安岳鲜柠檬 · 精选大果",
+          desc: "果皮细腻、汁水充足，适合日常泡水与烹饪。",
+          price: 39.9,
+          img: "https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1400&q=70",
+          taobaoUrl: "https://s.taobao.com/search?q=安岳柠檬精选大果",
+        },
+        {
+          id: "processed-1",
+          category: "processed",
+          tag: "深加工品",
+          title: "柠檬蜂蜜 · 冷泡更香",
+          desc: "酸甜平衡，冷泡/热饮皆宜，解腻清爽。",
+          price: 29.9,
+          img: "https://images.unsplash.com/photo-1542444459-db47a4a3fdc0?auto=format&fit=crop&w=1400&q=70",
+          taobaoUrl: "https://s.taobao.com/search?q=柠檬蜂蜜",
+        },
+        {
+          id: "cultural-1",
+          category: "cultural",
+          tag: "石窟文创",
+          title: "石窟纹样 · 帆布袋",
+          desc: "将安岳石刻元素融入日常，简洁耐用。",
+          price: 49.0,
+          img: "https://images.unsplash.com/photo-1520975958225-72ac0c67a955?auto=format&fit=crop&w=1400&q=70",
+          taobaoUrl: "https://s.taobao.com/search?q=石窟纹样帆布袋",
+        },
+        {
+          id: "fresh-2",
+          category: "fresh",
+          tag: "鲜柠檬",
+          title: "安岳鲜柠檬 · 家庭装",
+          desc: "日常囤货更划算，适合榨汁、烘焙与调味。",
+          price: 59.9,
+          img: "https://images.unsplash.com/photo-1513612254504-6b9732b0f1a8?auto=format&fit=crop&w=1400&q=70",
+          taobaoUrl: "https://s.taobao.com/search?q=安岳柠檬家庭装",
+        },
+        {
+          id: "processed-2",
+          category: "processed",
+          tag: "深加工品",
+          title: "柠檬片 · 低温烘焙",
+          desc: "保留香气与口感，冷热泡皆可。",
+          price: 19.9,
+          img: "https://images.unsplash.com/photo-1528826194825-1f87545a4c74?auto=format&fit=crop&w=1400&q=70",
+          taobaoUrl: "https://s.taobao.com/search?q=柠檬片低温烘焙",
+        },
+        {
+          id: "cultural-2",
+          category: "cultural",
+          tag: "石窟文创",
+          title: "佛光纹样 · 书签套装",
+          desc: "纸感温润，礼赠与自用皆宜。",
+          price: 18.8,
+          img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1400&q=70",
+          taobaoUrl: "https://s.taobao.com/search?q=书签套装文创",
+        },
+        ];
+      }
+
+      // 使用 main.js 中的函数，如果没有则定义备用函数
+      const formatPriceFn = window.formatPrice || function(n) {
+        return `¥${Number(n).toFixed(1)}`;
+      };
+
+      // 本页内部使用的收藏读取函数，避免与 main.js 中的同名变量冲突
+      function getFavoritesLocal() {
+        try {
+          // 使用 main.js 中的 STORAGE_KEYS，如果没有则使用字符串
+          const storageKey = (window.STORAGE_KEYS && window.STORAGE_KEYS.favorites) || "anyue_lemon:favorites";
+          const raw = localStorage.getItem(storageKey);
+          const favs = raw ? JSON.parse(raw) : [];
+          console.log('从 localStorage 读取的收藏数据:', favs);
+          return new Set(favs);
+        } catch (e) {
+          console.error('读取收藏数据失败:', e);
+          return new Set();
+        }
+      }
+
+      function renderFavorites() {
+        const favoritesGrid = document.getElementById('favoritesGrid');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (!favoritesGrid || !emptyState) {
+          console.error('收藏页面元素未找到');
+          return;
+        }
+        
+        // 每次渲染时重新获取商品数据，确保使用最新的
+        const PRODUCTS = getProducts();
+        const favs = getFavoritesLocal();
+        
+        console.log('=== 收藏页面调试信息 ===');
+        console.log('收藏的商品ID:', Array.from(favs));
+        console.log('所有商品ID:', PRODUCTS.map(p => p.id));
+        console.log('商品数据来源:', window.PRODUCTS ? 'main.js' : '备用数据');
+        
+        const favoriteProducts = PRODUCTS.filter(p => favs.has(p.id));
+        console.log('匹配的收藏商品数量:', favoriteProducts.length);
+        console.log('匹配的收藏商品:', favoriteProducts);
+        console.log('========================');
+        
+        if (favoriteProducts.length === 0) {
+          favoritesGrid.style.display = 'none';
+          emptyState.style.display = 'block';
+          return;
+        }
+        
+        favoritesGrid.style.display = 'grid';
+        emptyState.style.display = 'none';
+        
+        favoritesGrid.innerHTML = favoriteProducts.map(p => `
+          <article class="favorite-item" data-id="${p.id}" onclick="window.location.href='product.html?id=${p.id}'">
+            <div class="favorite-image">
+              <img src="${p.img}" alt="${p.title}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3E暂无图片%3C/text%3E%3C/svg%3E';" />
+              <div class="favorite-tag">${p.tag}</div>
+              <div class="favorite-badge" onclick="event.stopPropagation(); removeFromFavorites('${p.id}')" title="取消收藏">
+                <span class="star-icon">★</span>
+                <span class="favorite-text">已收藏</span>
+              </div>
+            </div>
+            <div class="favorite-info">
+              <h3 class="favorite-title">${p.title}</h3>
+              <p class="favorite-desc">${p.desc}</p>
+              <div class="favorite-meta">
+                <div class="favorite-price">${formatPriceFn(p.price)}</div>
+              </div>
+              <div class="favorite-actions">
+                <button class="action-btn action-btn-secondary" onclick="event.stopPropagation(); removeFromFavorites('${p.id}')">取消收藏</button>
+                <button class="action-btn action-btn-primary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">查看详情</button>
+              </div>
+            </div>
+          </article>
+        `).join('');
+      }
+
+      function removeFromFavorites(productId) {
+        if (confirm('确定要取消收藏吗？')) {
+          const favs = getFavoritesLocal();
+          favs.delete(productId);
+          const storageKey = (window.STORAGE_KEYS && window.STORAGE_KEYS.favorites) || "anyue_lemon:favorites";
+          localStorage.setItem(storageKey, JSON.stringify([...favs]));
+          
+          // 触发自定义事件，通知其他页面更新
+          window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
+            detail: { productId: productId, action: 'remove' } 
+          }));
+          
+          renderFavorites();
+        }
+      }
+
+      // 页面加载时渲染收藏商品
+      function initFavorites() {
+        console.log('initFavorites 开始执行');
+        const PRODUCTS = getProducts();
+        console.log('商品数据:', PRODUCTS);
+        console.log('商品数量:', PRODUCTS ? PRODUCTS.length : 0);
+        renderFavorites();
+      }
+      
+      // 确保 DOM 加载完成后立即执行
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initFavorites);
+      } else {
+        // DOM 已经加载完成，立即执行
+        initFavorites();
+      }
+
+      // 监听自定义事件，当其他页面收藏商品时自动刷新
+      window.addEventListener('favoritesUpdated', function() {
+        renderFavorites();
+      });
+
+      // 监听 storage 变化（跨标签页同步）
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'anyue_lemon:favorites') {
+          renderFavorites();
+        }
+      });
+
+      // 页面可见时刷新（从其他页面返回时）
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          renderFavorites();
+        }
+      });
+
+      // 页面获得焦点时刷新
+      window.addEventListener('focus', function() {
+        renderFavorites();
+      });
+    </script>
+  </body>
+</html>

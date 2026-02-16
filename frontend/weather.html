@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>石刻护柠 · 天气</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* 天气卡片淡入动画 */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .weather-fade-in {
+        animation: fadeInUp 0.5s ease-out;
+      }
+      
+      /* 悬浮提示样式 - 已在上面定义，这里保留工具提示样式 */
+      .wxMetric__tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(45, 35, 25, 0.95);
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+        width: 220px;
+        text-align: left;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        margin-bottom: 8px;
+      }
+      .wxMetric__tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: rgba(45, 35, 25, 0.95);
+      }
+      .wxMetric:hover .wxMetric__tooltip {
+        opacity: 1;
+        visibility: visible;
+      }
+      .wxMetric__tooltip-title {
+        font-weight: 600;
+        color: #FFD54F;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      
+      /* 更新时间显示 */
+      .weather-update {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .weather-update__refresh {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        user-select: none;
+      }
+      .weather-update__refresh:hover {
+        background: rgba(200, 176, 106, 0.1);
+        color: var(--accent2);
+      }
+      .weather-update__refresh:active {
+        transform: scale(0.95);
+      }
+      .weather-update__icon {
+        width: 16px;
+        height: 16px;
+        animation: spin 2s linear infinite;
+        animation-play-state: paused;
+        transition: transform 0.3s ease;
+      }
+      .weather-update__refresh:hover .weather-update__icon {
+        transform: rotate(180deg);
+      }
+      .weather-update__icon--loading {
+        animation-play-state: running;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      
+      /* 小柠今日生存报告 */
+      .survival-report {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(247, 243, 234, 0.9) 100%);
+        border-radius: 20px;
+        padding: 32px;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 20px rgba(33, 24, 10, 0.1);
+        border: 1px solid rgba(200, 176, 106, 0.2);
+      }
+      .report-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(160, 140, 90, 0.2);
+      }
+      .report-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 8px 0;
+        letter-spacing: 0.06em;
+      }
+      .report-date {
+        font-size: 14px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      
+      /* 柠檬状态 */
+      .lemon-status {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 24px;
+        background: linear-gradient(135deg, rgba(200, 176, 106, 0.18), rgba(200, 176, 106, 0.1));
+        border-radius: 16px;
+        margin-bottom: 28px;
+        border-left: 5px solid var(--accent);
+        box-shadow: 0 2px 12px rgba(200, 176, 106, 0.15);
+        transition: all 0.3s ease;
+      }
+      .lemon-status:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 16px rgba(200, 176, 106, 0.2);
+      }
+      .lemon-status__icon {
+        font-size: 56px;
+        line-height: 1;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+      .lemon-status__text {
+        flex: 1;
+        font-size: 18px;
+        color: var(--ink);
+        line-height: 1.7;
+        font-style: italic;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+      
+      /* 今日关键天气 */
+      .weather-key {
+        margin-bottom: 24px;
+      }
+      .weather-key__title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 20px 0;
+        letter-spacing: 0.06em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .weather-key__content {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(247, 243, 234, 0.9) 100%);
+        border: 1px solid rgba(200, 176, 106, 0.25);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 4px 20px rgba(33, 24, 10, 0.08);
+        transition: all 0.3s ease;
+      }
+      .weather-key__content:hover {
+        box-shadow: 0 6px 24px rgba(33, 24, 10, 0.12);
+        border-color: rgba(200, 176, 106, 0.35);
+      }
+      .weather-key__main {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 28px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid rgba(200, 176, 106, 0.2);
+      }
+      .weather-key__icon {
+        width: 72px;
+        height: 72px;
+        color: var(--accent2);
+        flex-shrink: 0;
+        background: linear-gradient(135deg, rgba(200, 176, 106, 0.15), rgba(200, 176, 106, 0.08));
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+      }
+      .weather-key__icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .weather-key__main-info {
+        flex: 1;
+      }
+      .weather-key__desc {
+        font-size: 18px;
+        color: var(--muted);
+        margin-bottom: 12px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+      }
+      .weather-key__temp {
+        font-size: 48px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+        line-height: 1;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      .weather-key__metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      .wxMetric {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(200, 176, 106, 0.2);
+        border-radius: 12px;
+        padding: 18px 16px;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: help;
+      }
+      .wxMetric:hover {
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.95);
+        border-color: rgba(200, 176, 106, 0.4);
+        box-shadow: 0 4px 12px rgba(200, 176, 106, 0.15);
+      }
+      .wxMetric__label {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 10px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .wxMetric__value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--accent2);
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.02em;
+      }
+      
+      /* 历史记录与成就 */
+      .history-section {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(247, 243, 234, 0.9) 100%);
+        border-radius: 20px;
+        padding: 32px;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 20px rgba(33, 24, 10, 0.1);
+        border: 1px solid rgba(200, 176, 106, 0.2);
+      }
+      .history-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 20px 0;
+        letter-spacing: 0.06em;
+      }
+      .history-days {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .history-day {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(200, 176, 106, 0.25);
+        border-radius: 12px;
+        padding: 20px 16px;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(33, 24, 10, 0.05);
+      }
+      .history-day:hover {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: rgba(200, 176, 106, 0.4);
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(200, 176, 106, 0.2);
+      }
+      .history-day__date {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 12px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+      }
+      .history-day__icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+      .history-day__temp {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      .history-day__desc {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      
+      @media (max-width: 620px) {
+        .weather-key__metrics {
+          grid-template-columns: 1fr;
+        }
+        .history-days {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回商品页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item nav__item--active" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page">
+      <section class="hero container">
+        <h1 class="hero__title">柠檬生长日记</h1>
+      </section>
+
+      <section class="container">
+        <!-- 小柠今日生存报告 -->
+        <div class="survival-report" id="survivalReport">
+          <div class="report-header">
+            <h2 class="report-title">小柠今日生存报告</h2>
+            <div class="report-date" id="reportDate">📅 2023年10月27日 星期四</div>
+          </div>
+
+          <!-- 柠檬状态 -->
+          <div class="lemon-status" id="lemonStatus">
+            <div class="lemon-status__icon">🍋</div>
+            <div class="lemon-status__text" id="lemonStatusText">喝饱了水，正在惬意呼吸~</div>
+          </div>
+
+          <!-- 今日关键天气 -->
+          <div class="weather-key" id="weatherCard">
+            <h3 class="weather-key__title">🌤️ 今日关键天气</h3>
+            <div class="weather-key__content">
+              <div class="weather-key__main">
+                <div class="weather-key__icon">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3.3v2.2M12 18.5v2.2M3.3 12h2.2M18.5 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M12 16.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Z" stroke="currentColor" stroke-width="1.6"/>
+                  </svg>
+                </div>
+                <div class="weather-key__main-info">
+                  <div class="weather-key__desc" id="wxDesc">晴天</div>
+                  <div class="weather-key__temp"><span id="wxTemp">24</span><span class="wxTemp__unit">°C</span></div>
+                </div>
+              </div>
+              <div class="weather-key__metrics">
+                <div class="wxMetric" id="humMetric">
+                  <div class="wxMetric__label">湿度</div>
+                  <div class="wxMetric__value" id="wxHum">65%</div>
+                  <div class="wxMetric__tooltip">
+                    <div class="wxMetric__tooltip-title">湿度影响</div>
+                    <div id="humTip">当前湿度适中，有利于柠檬正常生长。</div>
+                  </div>
+                </div>
+                <div class="wxMetric" id="rainMetric">
+                  <div class="wxMetric__label">降水量</div>
+                  <div class="wxMetric__value" id="wxRain">0mm</div>
+                  <div class="wxMetric__tooltip">
+                    <div class="wxMetric__tooltip-title">降水建议</div>
+                    <div id="rainTip">无降水，需注意适时灌溉保持土壤湿润。</div>
+                  </div>
+                </div>
+                <div class="wxMetric" id="windDirMetric">
+                  <div class="wxMetric__label">风向</div>
+                  <div class="wxMetric__value" id="wxWindDir">南风</div>
+                  <div class="wxMetric__tooltip">
+                    <div class="wxMetric__tooltip-title">风向说明</div>
+                    <div id="windDirTip">南风带来温暖湿润的空气，有利于柠檬生长。</div>
+                  </div>
+                </div>
+                <div class="wxMetric" id="windSpeedMetric">
+                  <div class="wxMetric__label">风速</div>
+                  <div class="wxMetric__value" id="wxWindSpeed">4km/h</div>
+                  <div class="wxMetric__tooltip">
+                    <div class="wxMetric__tooltip-title">风速影响</div>
+                    <div id="windSpeedTip">微风有利于空气流通，减少病虫害发生。</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 柠味7日晴雨表 -->
+        <div class="history-section">
+          <h3 class="history-title">柠味7日晴雨表</h3>
+          <div class="history-days" id="historyDays">
+            <!-- 过去7天的天气记录将在这里动态生成 -->
+          </div>
+        </div>
+
+        <!-- 更新时间显示 -->
+        <div class="weather-update">
+          <div class="weather-update__refresh" id="refreshBtn" title="点击手动刷新">
+            <svg class="weather-update__icon" id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            <span>上次更新：<span id="updateTime">--</span></span>
+          </div>
+          <span style="margin-left: 8px; color: rgba(160, 140, 90, 0.6);">（每小时自动刷新，点击图标手动刷新）</span>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+      // 天气数据管理
+      const WeatherManager = {
+        // 获取柠檬状态（拟人化描述）
+        getLemonStatus(temp, humidity) {
+          const t = parseInt(temp);
+          const h = parseInt(humidity);
+          
+          // 根据温度和湿度组合生成拟人化描述
+          if (t >= 20 && t <= 28 && h >= 50 && h <= 80) {
+            return "喝饱了水，正在惬意呼吸~";
+          } else if (h >= 90) {
+            return "空气太湿润了，有点透不过气...";
+          } else if (h < 30) {
+            return "好渴啊，需要多喝点水~";
+          } else if (t >= 35) {
+            return "太热了，需要遮阴降温~";
+          } else if (t < 10) {
+            return "好冷啊，需要保暖~";
+          } else if (t >= 28 && t < 35) {
+            return "有点热，但还能坚持~";
+          } else if (t >= 10 && t < 20) {
+            return "有点凉，生长变慢了~";
+          } else {
+            return "状态良好，正在努力成长~";
+          }
+        },
+        
+        // 获取悬浮提示文本
+        getHumidityTip(humidity) {
+          const h = parseInt(humidity);
+          if (h >= 90) return `湿度${humidity}：柠檬叶片易结露，需加强通风避免病害，防止真菌滋生。`;
+          if (h >= 70) return `湿度${humidity}：湿度偏高，注意观察叶片状况，保持良好通风。`;
+          if (h >= 50) return `湿度${humidity}：当前湿度适中，有利于柠檬正常生长和果实发育。`;
+          if (h >= 30) return `湿度${humidity}：湿度偏低，需适当增加灌溉，防止叶片水分流失。`;
+          return `湿度${humidity}：空气干燥，建议喷水增湿，避免柠檬叶片干枯。`;
+        },
+        
+        getTempTip(temp) {
+          const t = parseInt(temp);
+          if (t >= 35) return `温度${temp}°C：高温天气，需遮阴降温，增加灌溉频次，防止日灼。`;
+          if (t >= 28) return `温度${temp}°C：温度较高，注意保持土壤湿润，中午可适当遮阴。`;
+          if (t >= 20) return `温度${temp}°C：最适宜柠檬生长的温度，保持正常管理即可。`;
+          if (t >= 10) return `温度${temp}°C：温度偏低，柠檬生长放缓，注意保温防寒。`;
+          return `温度${temp}°C：低温警告！需采取防冻措施，覆盖保温材料。`;
+        },
+        
+        getRainTip(rain) {
+          const r = parseFloat(rain);
+          if (r >= 50) return `降水量${rain}：暴雨天气，注意排水防涝，防止根系缺氧腐烂。`;
+          if (r >= 20) return `降水量${rain}：中到大雨，检查排水系统，避免积水。`;
+          if (r >= 5) return `降水量${rain}：小到中雨，天然灌溉有利于柠檬吸收水分。`;
+          if (r > 0) return `降水量${rain}：小雨滋润，有利于柠檬新叶生长。`;
+          return `降水量${rain}：无降水，需注意适时灌溉保持土壤湿润。`;
+        },
+        
+        getWindDirTip(dir) {
+          if (dir.includes('南')) return `${dir}：带来温暖湿润的空气，有利于柠檬生长。`;
+          if (dir.includes('北')) return `${dir}：可能带来干冷空气，注意防寒保暖。`;
+          if (dir.includes('东')) return `${dir}：海风带来湿润气流，有助于调节温湿度。`;
+          if (dir.includes('西')) return `${dir}：内陆气流，空气相对干燥，注意保湿。`;
+          return `${dir}：注意观察天气变化，及时调整管理措施。`;
+        },
+        
+        getWindSpeedTip(speed) {
+          const s = parseInt(speed);
+          if (s >= 40) return `风速${speed}：大风天气，需加固支撑，防止枝条折断。`;
+          if (s >= 20) return `风速${speed}：风力较大，检查果树支撑情况，必要时加固。`;
+          if (s >= 10) return `风速${speed}：适度风力，有利于花粉传播和空气流通。`;
+          return `风速${speed}：微风有利于空气流通，减少病虫害发生。`;
+        },
+        
+        // 更新悬浮提示
+        updateTooltips(data) {
+          const tempTipEl = document.getElementById('tempTip');
+          if (tempTipEl) tempTipEl.textContent = this.getTempTip(data.temp);
+
+          const humTipEl = document.getElementById('humTip');
+          if (humTipEl) humTipEl.textContent = this.getHumidityTip(data.humidity);
+
+          const rainTipEl = document.getElementById('rainTip');
+          if (rainTipEl) rainTipEl.textContent = this.getRainTip(data.precip);
+
+          const windDirTipEl = document.getElementById('windDirTip');
+          if (windDirTipEl) windDirTipEl.textContent = this.getWindDirTip(data.windDir);
+
+          const windSpeedTipEl = document.getElementById('windSpeedTip');
+          if (windSpeedTipEl) windSpeedTipEl.textContent = this.getWindSpeedTip(data.windSpeed);
+        },
+        
+        // 格式化日期
+        formatDate(date) {
+          const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+          const year = date.getFullYear();
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const day = date.getDate().toString().padStart(2, '0');
+          const weekday = weekdays[date.getDay()];
+          return `📅 ${year}年${month}月${day}日 ${weekday}`;
+        },
+        
+        // 从和风天气 7 天天气预报接口获取历史 / 未来数据
+        async fetchHistoryFromApi() {
+          if (typeof BACKEND_BASE_URL === 'undefined') {
+            return null;
+          }
+          try {
+            const resp = await fetch(`${BACKEND_BASE_URL}/api/weather/7d`);
+            const raw = await resp.json();
+            if (!raw || !raw.ok || !raw.data || !Array.isArray(raw.data.days)) {
+              console.error('7 天天气接口返回数据异常', raw);
+              return null;
+            }
+            return raw.data;
+          } catch (e) {
+            console.error('获取 7 天天气预报失败', e);
+            return null;
+          }
+        },
+
+        // 简单把和风 icon / 文本映射成页面用的表情
+        mapWeatherToEmoji(text) {
+          const t = text || '';
+          if (t.includes('雨')) return '🌧️';
+          if (t.includes('雪')) return '❄️';
+          if (t.includes('雷')) return '⛈️';
+          if (t.includes('雾') || t.includes('霾')) return '🌫️';
+          if (t.includes('多云') || t.includes('阴')) return '⛅';
+          if (t.includes('晴')) return '☀️';
+          return '☁️';
+        },
+
+        // 本地兜底：随机生成 7 天数据（和之前逻辑一致）
+        generateFallbackHistory() {
+          const history = [];
+          const today = new Date();
+          const weathers = ['☀️', '⛅', '🌧️', '🌫️', '☁️'];
+          const descs = ['晴天', '多云', '雨天', '雾天', '阴天'];
+
+          for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const random = Math.floor(Math.random() * weathers.length);
+            history.push({
+              date,
+              icon: weathers[random],
+              desc: descs[random],
+              tempMin: Math.floor(Math.random() * 8) + 15,   // 15-22 度
+              tempMax: Math.floor(Math.random() * 8) + 23,   // 23-30 度
+            });
+          }
+
+          return history.map((d) => ({
+            dateStr: `${(d.date.getMonth() + 1).toString().padStart(2, '0')}/${d.date.getDate().toString().padStart(2, '0')}`,
+            icon: d.icon,
+            desc: d.desc,
+            tempRange: `${d.tempMin}~${d.tempMax}°C`,
+          }));
+        },
+        
+        // 渲染历史记录（优先使用后端接口数据）
+        async renderHistory() {
+          const historyDays = document.getElementById('historyDays');
+          if (!historyDays) return;
+
+          let historyCards = [];
+
+          // 优先尝试通过后端 API 获取 7 天预报
+          const apiData = await this.fetchHistoryFromApi();
+          if (apiData && Array.isArray(apiData.days)) {
+            historyCards = apiData.days.slice(0, 7).map((d) => {
+              const dateObj = new Date(d.date);
+              const dateStr = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
+              const text = d.textDay || d.textNight || '';
+              const icon = this.mapWeatherToEmoji(text);
+              const tempRange = `${d.tempMin}~${d.tempMax}°C`;
+              return {
+                dateStr,
+                icon,
+                desc: text,
+                tempRange,
+              };
+            });
+          } else {
+            // 接口不可用时使用本地随机数据兜底，防止页面空白
+            historyCards = this.generateFallbackHistory();
+          }
+
+          historyDays.innerHTML = historyCards
+            .map((day) => {
+              return `
+                <div class="history-day">
+                  <div class="history-day__date">${day.dateStr}</div>
+                  <div class="history-day__icon">${day.icon}</div>
+                  <div class="history-day__temp">${day.tempRange}</div>
+                  <div class="history-day__desc">${day.desc}</div>
+                </div>
+              `;
+            })
+            .join('');
+        },
+        
+        // 刷新天气数据（带动画）
+        async refreshWeather() {
+          const card = document.getElementById('weatherCard');
+          const refreshIcon = document.getElementById('refreshIcon');
+          
+          // 显示加载动画
+          if (refreshIcon) {
+            refreshIcon.classList.add('weather-update__icon--loading');
+          }
+          
+          try {
+            const useBackend = typeof BACKEND_BASE_URL !== 'undefined';
+            const url = useBackend
+              ? `${BACKEND_BASE_URL}/api/weather/now`
+              : 'js/weather_data.json';
+
+            const resp = await fetch(url);
+            const raw = await resp.json();
+            const data = useBackend && raw && raw.ok ? raw.data : raw;
+            
+            if (!data) {
+              console.error('天气数据为空', raw);
+              return;
+            }
+            
+            // 添加淡入动画
+            if (card) {
+              card.classList.remove('weather-fade-in');
+              void card.offsetWidth; // 触发重绘
+              card.classList.add('weather-fade-in');
+            }
+            
+            // 更新日期
+            const now = new Date();
+            const reportEl = document.getElementById('reportDate');
+            if (reportEl) reportEl.textContent = this.formatDate(now);
+            
+            // 更新柠檬状态
+            const lemonStatus = this.getLemonStatus(data.temp, data.humidity);
+            const lemonEl = document.getElementById('lemonStatusText');
+            if (lemonEl) lemonEl.textContent = lemonStatus;
+            
+            // 更新天气数据
+            const setText = (id, v) => {
+              const el = document.getElementById(id);
+              if (el && v != null) el.textContent = v;
+            };
+            setText('wxTemp', data.temp);
+            setText('wxDesc', data.desc);
+            setText('wxHum', data.humidity);
+            setText('wxRain', data.precip);
+            setText('wxWindDir', data.windDir);
+            setText('wxWindSpeed', data.windSpeed);
+            
+            // 更新提示
+            this.updateTooltips(data);
+            
+            // 更新时间
+            const timeEl = document.getElementById('updateTime');
+            if (timeEl) {
+              timeEl.textContent =
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            }
+          } catch (error) {
+            console.error('获取天气数据失败:', error);
+          } finally {
+            // 停止加载动画
+            if (refreshIcon) {
+              setTimeout(() => {
+                refreshIcon.classList.remove('weather-update__icon--loading');
+              }, 500);
+            }
+          }
+        },
+        
+        // 初始化
+        init() {
+          // 首次加载
+          this.refreshWeather();
+          
+          // 渲染历史记录（包含 7 天最低/最高温和天气情况）
+          this.renderHistory();
+          
+          // 手动刷新按钮点击事件
+          const refreshBtn = document.getElementById('refreshBtn');
+          if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+              this.refreshWeather();
+            });
+          }
+          
+          // 每小时自动刷新（3600000毫秒 = 1小时）
+          setInterval(() => this.refreshWeather(), 3600000);
+        }
+      };
+      
+      // 页面加载完成后初始化
+      document.addEventListener('DOMContentLoaded', () => {
+        WeatherManager.init();
+      });
+    </script>
+  </body>
+</html>
+

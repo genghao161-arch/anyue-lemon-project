@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>石刻护柠 · 门店查询</title>
+    <link rel="stylesheet" href="css/style.css" />
+
+    <!-- 1. 先配置高德 JS API 安全密钥（securityJsCode） -->
+    <script type="text/javascript">
+      // Web端(JS API) Key（用于交互地图 maps?v=2.0）
+      window.AMAP_JS_KEY = "ec8f38aa92cb32349b2a7bd1fa693f9d";
+      // Web服务 Key（用于静态地图/地理编码等 restapi.amap.com 接口）
+      window.AMAP_WEB_SERVICE_KEY = "ec8f38aa92cb32349b2a7bd1fa693f9d";
+      window.AMAP_JS_SECURITY = "4a8955e666b7bf2e22bba9d35f670a87"; // securityJsCode
+      window._AMapSecurityConfig = {
+        securityJsCode: window.AMAP_JS_SECURITY,
+      };
+    </script>
+
+    <!-- 2. 再加载高德 JS 地图脚本，使用 JS API Key -->
+    <script
+      type="text/javascript"
+      src="https://webapi.amap.com/maps?v=2.0&key=ec8f38aa92cb32349b2a7bd1fa693f9d&callback=initAMap">
+    </script>
+
+    <!-- 3. 高德脚本加载完成后的回调（保证脚本加载完会尝试初始化地图） -->
+    <script>
+      window.initAMap = function() {
+        if (typeof window.initMap === 'function') {
+          window.initMap();
+        }
+      };
+    </script>
+    <style>
+      /* 高德地图自定义门店 Marker 样式 */
+      .store-marker {
+        position: relative;
+        width: 42px;
+        height: 54px;
+        transform: translateZ(0);
+        filter: drop-shadow(0 10px 16px rgba(20, 16, 8, 0.20));
+      }
+      .store-marker__pin {
+        position: absolute;
+        left: 50%;
+        top: 6px;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        transform: translateX(-50%);
+        background: radial-gradient(circle at 30% 30%, #ffe9a8 0%, #d7b869 45%, #9d8750 100%);
+        border: 2px solid rgba(255, 255, 255, 0.85);
+        box-shadow:
+          0 10px 18px rgba(157, 135, 80, 0.35),
+          inset 0 2px 3px rgba(255, 255, 255, 0.55);
+      }
+      .store-marker__pin::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -16px;
+        width: 14px;
+        height: 14px;
+        transform: translateX(-50%) rotate(45deg);
+        background: linear-gradient(135deg, #d7b869 0%, #9d8750 100%);
+        border-bottom-right-radius: 6px;
+        box-shadow: 4px 6px 14px rgba(157, 135, 80, 0.25);
+      }
+      .store-marker__num {
+        position: absolute;
+        left: 50%;
+        top: 11px;
+        transform: translateX(-50%);
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: rgba(25, 18, 7, 0.72);
+        color: #fff;
+        font-size: 12px;
+        line-height: 18px;
+        text-align: center;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+      .store-marker__halo {
+        position: absolute;
+        left: 50%;
+        top: 1px;
+        width: 42px;
+        height: 42px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(200, 176, 106, 0.20) 0%, rgba(200, 176, 106, 0.0) 70%);
+        pointer-events: none;
+      }
+      .store-marker__shadow {
+        position: absolute;
+        left: 50%;
+        bottom: 4px;
+        width: 18px;
+        height: 6px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: rgba(25, 18, 7, 0.20);
+        filter: blur(0.2px);
+      }
+      .store-marker.is-active .store-marker__pin {
+        background: radial-gradient(circle at 30% 30%, #fff1c1 0%, #f0c86b 45%, #c79b3a 100%);
+        box-shadow:
+          0 12px 22px rgba(199, 155, 58, 0.35),
+          inset 0 2px 3px rgba(255, 255, 255, 0.65);
+      }
+
+      .store-page {
+        display: flex;
+        height: calc(100vh - 65px);
+        overflow: hidden;
+      }
+      .store-sidebar {
+        width: 400px;
+        background: rgba(255, 255, 255, 0.95);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .store-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .store-search {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .store-search input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 14px;
+        background: rgba(255, 255, 255, 0.9);
+      }
+      .store-search button {
+        padding: 12px 20px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .store-city {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: rgba(200, 176, 106, 0.1);
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .store-city select {
+        flex: 1;
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        color: var(--ink);
+        cursor: pointer;
+      }
+      /* 已移除“筛选”按钮 */
+      .store-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+      }
+      .store-item {
+        padding: 16px;
+        margin-bottom: 12px;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .store-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+      .store-item.active {
+        background: rgba(200, 176, 106, 0.15);
+        border-color: var(--accent);
+      }
+      .store-item__name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 8px;
+      }
+      .store-item__badges {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .store-item__badge {
+        padding: 4px 8px;
+        background: rgba(200, 176, 106, 0.2);
+        border-radius: 4px;
+        font-size: 11px;
+        color: var(--accent2);
+      }
+      .store-item__badge--hours {
+        background: rgba(200, 176, 106, 0.25);
+        font-weight: 500;
+        color: var(--accent2);
+      }
+      .store-item__number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: rgba(160, 140, 90, 0.2);
+        border-radius: 50%;
+        font-size: 12px;
+        color: var(--muted);
+        margin-right: 8px;
+      }
+      .store-item__address {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-bottom: 6px;
+      }
+      .store-item__distance {
+        font-size: 12px;
+        color: var(--accent2);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .store-item__info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+      }
+      .store-map {
+        flex: 1;
+        position: relative;
+      }
+      .store-map__container {
+        width: 100%;
+        height: 100%;
+      }
+      .store-map__hint {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 6px;
+        font-size: 12px;
+        color: var(--muted);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      @media (max-width: 980px) {
+        .store-page {
+          flex-direction: column;
+        }
+        .store-sidebar {
+          width: 100%;
+          height: 40%;
+        }
+        .store-map {
+          height: 60%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item nav__item--active" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="store-page">
+      <aside class="store-sidebar">
+        <div class="store-header">
+          <div class="store-search">
+            <input type="text" id="storeSearch" placeholder="输入地址查找门店" />
+            <button id="searchBtn">搜索</button>
+          </div>
+          <div class="store-city">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            <select id="citySelect"></select>
+          </div>
+          <!-- 已移除“筛选”按钮 -->
+        </div>
+        <div class="store-list" id="storeList"></div>
+      </aside>
+      <div class="store-map">
+        <div id="mapContainer" class="store-map__container"></div>
+        <div class="store-map__hint">放大缩小地图来查看更多门店</div>
+      </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/store.js"></script>
+  </body>
+</html>

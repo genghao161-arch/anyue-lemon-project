@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>客服聊天 · 石刻护柠</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* 聊天区域：顶部标题与底部发送框固定，仅中间内容滚动 */
+      .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 200px);
+        min-height: 400px;
+        max-height: 720px;
+        background: #f8f8f8;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      .chat-header {
+        flex-shrink: 0;
+        background: white;
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .chat-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0;
+      }
+      .chat-body {
+        flex: 1;
+        min-height: 0;
+        padding: 20px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      #chatMessageList {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .message-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .message-row--left {
+        align-self: flex-start;
+        flex-direction: row;
+      }
+      .message-row--right {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+      }
+      .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .message-avatar--bot {
+        background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+      }
+      .message-avatar--user {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+      }
+      .message {
+        max-width: 78%;
+        padding: 14px 16px;
+        border-radius: 14px;
+      }
+      .message-bot {
+        background: white;
+        border: 1px solid rgba(0,0,0,0.06);
+        border-bottom-left-radius: 4px;
+      }
+      .message-user {
+        background: var(--accent);
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+      .consultation-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 20px;
+        margin-bottom: 20px;
+        margin-left: auto;
+        max-width: 360px;
+        border: 1px solid rgba(200, 176, 106, 0.2);
+        animation: slideInRight 0.4s ease-out;
+      }
+      @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      .consultation-header {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .consultation-img {
+        width: 72px;
+        height: 72px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: #f5f5f5;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      }
+      .consultation-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+      }
+      .consultation-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0;
+      }
+      .consultation-price {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0;
+      }
+      .send-link-full-btn {
+        width: 100%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(200, 176, 106, 0.2);
+      }
+      .send-link-full-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(200, 176, 106, 0.3);
+      }
+      .send-link-full-btn:active {
+        transform: translateY(0);
+      }
+      .send-link-full-btn:disabled {
+        background: #f0f0f0;
+        color: #999;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
+      .consultation-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+      }
+      .action-chip {
+        flex: 1;
+        padding: 10px 4px;
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        font-size: 12px;
+        color: #555;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .action-chip:hover {
+        background: white;
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        transform: translateY(-2px);
+      }
+      .action-chip i {
+        font-size: 16px;
+        margin-bottom: 2px;
+        font-style: normal;
+      }
+      .chat-footer {
+        flex-shrink: 0;
+        padding: 20px;
+        border-top: 1px solid #e0e0e0;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .input-container {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+      }
+      .input-tools {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .tool-btn {
+        width: 36px;
+        height: 36px;
+        background: #f0f0f0;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .chat-input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 24px;
+        font-size: 14px;
+        resize: none;
+        min-height: 48px;
+        max-height: 120px;
+      }
+      .chat-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
+      }
+      .send-btn {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chat-options {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        margin-left: auto;
+        max-width: 400px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .option-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(160, 140, 90, 0.3);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+      }
+      .option-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .option-item input[type="radio"] {
+        cursor: pointer;
+        accent-color: var(--accent);
+      }
+      .option-item input[type="radio"]:checked + label {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .option-item label {
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+      .option-item--selected {
+        background: rgba(200, 176, 106, 0.2);
+        border-color: var(--accent);
+      }
+      
+      /* 商品详情展示区域 */
+      .product-detail-panel {
+        display: none;
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 16px;
+        margin-left: auto;
+        max-width: 400px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        animation: slideIn 0.3s ease-out;
+      }
+      .product-detail-panel--show {
+        display: block;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .detail-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 12px 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .detail-content {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .detail-item {
+        margin-bottom: 8px;
+      }
+      .detail-label {
+        font-weight: 500;
+        color: var(--ink);
+        margin-right: 8px;
+      }
+      
+      /* 消息中的商品卡片样式 */
+      .message-product-card {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        margin-top: 8px;
+        border: 1px solid rgba(200, 176, 106, 0.2);
+      }
+      .message-product-image {
+        width: 60px;
+        height: 60px;
+        background: #f0f0f0;
+        border-radius: 6px;
+        flex-shrink: 0;
+        overflow: hidden;
+      }
+      .message-product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .message-product-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .message-product-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+        margin: 0;
+      }
+      .message-product-price {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0;
+      }
+      
+      /* 表情选择器样式 */
+      .emoji-picker {
+        position: absolute;
+        bottom: 70px;
+        left: 0;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        padding: 16px;
+        width: 320px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+      }
+      .emoji-picker--show {
+        display: block;
+        animation: slideUp 0.3s ease-out;
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .emoji-category {
+        margin-bottom: 12px;
+      }
+      .emoji-category-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+      .emoji-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 4px;
+      }
+      .emoji-item {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
+      .emoji-item:hover {
+        background: rgba(200, 176, 106, 0.1);
+        transform: scale(1.1);
+      }
+      
+      /* 图片上传相关样式 */
+      .image-upload-input {
+        display: none;
+      }
+      .message-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        margin-top: 8px;
+        object-fit: cover;
+        cursor: pointer;
+      }
+      .image-preview-container {
+        position: relative;
+        display: inline-block;
+        margin-top: 8px;
+      }
+      .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+      .image-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        background: rgba(244, 67, 54, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      .input-container {
+        position: relative;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回商品页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page">
+      <section class="container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="javascript:void(0)" onclick="history.back(); return false;" style="color: var(--accent2); text-decoration: none; cursor: pointer;">&lt; 返回</a>
+            <a href="index.html" style="color: var(--accent2); text-decoration: none;">首页</a>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="favorites.html" style="color: var(--accent2); text-decoration: none;">收藏</a>
+            <a href="vote.html" style="color: var(--accent2); text-decoration: none;">个人中心</a>
+          </div>
+        </div>
+
+        <div class="chat-container">
+          <div class="chat-header">
+            <h2>石刻护柠客服</h2>
+            <span style="font-size: 14px; color: #999;">在线</span>
+          </div>
+          
+          <div class="chat-body">
+            <!-- 仅消息列表：商品链接作为消息的一部分显示（会被新消息自然顶上去） -->
+            <div id="chatMessageList">
+              <div class="message message-bot">
+                <p style="margin: 0; font-size: 14px; color: #666;">您好！欢迎咨询石刻护柠，请问有什么可以帮助您的？</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="chat-footer">
+            <div class="input-container">
+              <div class="input-tools">
+                <button class="tool-btn" type="button" title="表情" id="emojiBtn">😀</button>
+                <button class="tool-btn" type="button" title="图片" id="imageBtn">🖼️</button>
+              </div>
+              <textarea class="chat-input" id="chatInput" placeholder="请输入您想要咨询的内容..."></textarea>
+              <input type="file" id="imageUpload" class="image-upload-input" accept="image/*" />
+              <button class="send-btn" type="button" id="sendBtn">发送</button>
+            </div>
+            <!-- 表情选择器 -->
+            <div class="emoji-picker" id="emojiPicker">
+              <div class="emoji-category">
+                <div class="emoji-category-title">常用表情</div>
+                <div class="emoji-grid" id="emojiGrid">
+                  <!-- 表情将通过JavaScript动态添加 -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+      const BACKEND = typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : '';
+      let customerLoggedIn = false;
+      let customerMessagePollTimer = null;
+
+      function renderChatMessages(items) {
+        const list = document.getElementById('chatMessageList');
+        if (!list) return;
+        if (!items || items.length === 0) {
+          list.innerHTML = '<div class="message-row message-row--left"><span class="message-avatar message-avatar--bot">客</span><div class="message message-bot"><p style="margin: 0; font-size: 14px; color: #666;">您好！欢迎咨询石刻护柠，请问有什么可以帮助您的？</p></div></div>';
+          return;
+        }
+        list.innerHTML = items.map(function(m) {
+          const isUser = m.senderType === 'customer';
+          const rowClass = isUser ? 'message-row message-row--right' : 'message-row message-row--left';
+          const avatarClass = isUser ? 'message-avatar message-avatar--user' : 'message-avatar message-avatar--bot';
+          const avatarLetter = isUser ? '我' : '客';
+          const cls = isUser ? 'message message-user' : 'message message-bot';
+          const rawText = (m.content || '');
+          const safeText = rawText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const hasImage = !!m.image;
+          const isProductLinkMsg = hasImage && /^我想咨询这个商品：/i.test(rawText.trim());
+          let body = '';
+          if (isProductLinkMsg) {
+            // 解析「我想咨询这个商品：标题 ¥xx」并渲染为商品卡片（消息里展示，后续新消息会把它顶上去）
+            const t = rawText.trim().replace(/^我想咨询这个商品：\s*/i, '');
+            const match = t.match(/^(.*?)(\s+¥\s*[\d.]+)?$/);
+            const title = (match && match[1] ? match[1].trim() : t).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const price = (match && match[2] ? match[2].trim() : '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            body += '<p style="margin: 0 0 8px 0;">我想咨询这个商品：</p>';
+            body += '<div class="message-product-card">';
+            body += '<div class="message-product-image"><img src="' + String(m.image).replace(/"/g, '&quot;') + '" alt="' + title + '" /></div>';
+            body += '<div class="message-product-info">';
+            body += '<div class="message-product-title">' + title + '</div>';
+            body += '<div class="message-product-price">' + (price || '') + '</div>';
+            body += '</div></div>';
+          } else {
+            if (rawText && rawText.trim()) body += '<p style="margin: 0;">' + safeText + '</p>';
+            if (hasImage) body += '<div class="image-preview-container"><img src="' + String(m.image).replace(/"/g, '&quot;') + '" alt="图片" class="message-image" /></div>';
+            if (!body) body = '<p style="margin: 0; color: #999;">（空消息）</p>';
+          }
+          return '<div class="' + rowClass + '"><span class="' + avatarClass + '">' + avatarLetter + '</span><div class="' + cls + '">' + body + '</div></div>';
+        }).join('');
+        const chatBody = document.querySelector('.chat-body');
+        if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
+      }
+
+      function loadCustomerMessages() {
+        if (!BACKEND || !customerLoggedIn) return;
+        fetch(BACKEND + '/api/customer/messages', { credentials: 'include' })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && data.ok && Array.isArray(data.items)) renderChatMessages(data.items);
+          })
+          .catch(function() {});
+      }
+
+      function initCustomerChat() {
+        if (!BACKEND) return;
+        fetch(BACKEND + '/api/auth/me', { credentials: 'include' })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (!data || !data.ok || !data.user) {
+              customerLoggedIn = false;
+              var list = document.getElementById('chatMessageList');
+              if (list) {
+                list.innerHTML = '<div class="message message-bot"><p style="margin: 0; color: #666;">请先<a href="login.html?redirect=' + encodeURIComponent(window.location.href) + '">登录</a>后再与客服交流。</p></div>';
+              }
+              return;
+            }
+            customerLoggedIn = true;
+            fetch(BACKEND + '/api/customer/conversation', { credentials: 'include' })
+              .then(function(r) { return r.json(); })
+              .then(function() {
+                loadCustomerMessages();
+                autoSendProductLink();
+              })
+              .catch(function() { loadCustomerMessages(); autoSendProductLink(); });
+            if (customerMessagePollTimer) clearInterval(customerMessagePollTimer);
+            customerMessagePollTimer = setInterval(loadCustomerMessages, 3000);
+          })
+          .catch(function() {});
+      }
+      document.addEventListener('DOMContentLoaded', initCustomerChat);
+
+      // 商品信息（默认安岳新鲜柠檬；若 URL 带 id/title/price/image 则刷新为新商品）
+      const productInfo = {
+        id: 'fresh-1',
+        title: '安岳新鲜柠檬',
+        price: '¥19.90',
+        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fresh%20lemon%20fruit%20on%20white%20background&image_size=square',
+        link: window.location.href
+      };
+
+      function applyProductFromUrl() {
+        var params = new URLSearchParams(window.location.search);
+        var id = params.get('id');
+        var title = params.get('title');
+        var price = params.get('price');
+        var image = params.get('image');
+        if (id) productInfo.id = id;
+        if (title) productInfo.title = decodeURIComponent(title);
+        if (price) productInfo.price = decodeURIComponent(price);
+        if (image) productInfo.image = decodeURIComponent(image);
+      }
+      document.addEventListener('DOMContentLoaded', applyProductFromUrl);
+
+      function autoSendProductLink() {
+        var params = new URLSearchParams(window.location.search);
+        if (!params.get('id') && !params.get('title') && !params.get('price') && !params.get('image')) return;
+        if (!customerLoggedIn || !BACKEND) return;
+        applyProductFromUrl();
+        var ts = params.get('ts') || '';
+        // 优先用 ts 标记一次咨询，避免刷新重复发送；没有 ts 时退回到按商品 id 防重
+        var key = 'customer_autosent_' + (ts || (productInfo.id || ''));
+        try { if (sessionStorage.getItem(key)) return; } catch (e) {}
+        var text = '我想咨询这个商品：' + productInfo.title + ' ' + (productInfo.price || '');
+        try { sessionStorage.setItem(key, '1'); } catch (e) {}
+        fetch(BACKEND + '/api/customer/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            content: text,
+            image: productInfo.image || null,
+            productId: productInfo.id || null
+          })
+        }).then(function(r) { return r.json(); }).then(function() { loadCustomerMessages(); }).catch(function() {});
+      }
+
+      // 咨询选项点击事件
+      const actionChips = document.querySelectorAll('.action-chip');
+      
+      actionChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+          const optionValue = this.dataset.value;
+          const chatInput = document.querySelector('.chat-input');
+          
+          // 简单的点击反馈动画
+          this.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            this.style.transform = '';
+          }, 150);
+          
+          let consultMessage = '';
+          switch(optionValue) {
+            case 'price':
+              consultMessage = '我想了解一下这个商品的价格，有什么优惠活动吗？';
+              break;
+            case 'spec':
+              consultMessage = '请问这个商品有哪些规格可以选择？';
+              break;
+            case 'delivery':
+              consultMessage = '请问这个商品的配送方式和时间是怎么样的？';
+              break;
+          }
+          
+          // 自动填充到输入框并发送
+          chatInput.value = consultMessage;
+          chatInput.focus();
+          setTimeout(function() { sendMessage(consultMessage); }, 300);
+        });
+      });
+
+      // 发送消息函数（与客服实时沟通：发送到后端，轮询获取客服回复）
+      async function sendMessage(messageText, imageData) {
+        if (!messageText || !String(messageText).trim()) {
+          if (!imageData) return;
+        }
+        if (!customerLoggedIn || !BACKEND) {
+          alert('请先登录后再发送消息');
+          return;
+        }
+        var chatMessageList = document.getElementById('chatMessageList');
+        var chatBody = document.querySelector('.chat-body');
+        var input = document.getElementById('chatInput');
+        var row = document.createElement('div');
+        row.className = 'message-row message-row--right';
+        var avatar = document.createElement('span');
+        avatar.className = 'message-avatar message-avatar--user';
+        avatar.textContent = '我';
+        var userMessage = document.createElement('div');
+        userMessage.className = 'message message-user';
+        var messageHTML = '';
+        if (messageText && String(messageText).trim()) {
+          messageHTML += '<p style="margin: 0;">' + String(messageText).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>';
+        }
+        if (imageData) {
+          messageHTML += '<div class="image-preview-container"><img src="' + imageData + '" alt="上传的图片" class="message-image" /></div>';
+        }
+        userMessage.innerHTML = messageHTML;
+        row.appendChild(avatar);
+        row.appendChild(userMessage);
+        if (chatMessageList) chatMessageList.appendChild(row);
+        input.value = '';
+        window.currentImageData = null;
+        var imagePreview = document.getElementById('imagePreview');
+        if (imagePreview) imagePreview.remove();
+        var imageUpload = document.getElementById('imageUpload');
+        if (imageUpload) imageUpload.value = '';
+        if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
+        try {
+          var payload = { content: messageText || '', image: imageData || null, productId: productInfo && productInfo.id ? productInfo.id : null };
+          var resp = await fetch(BACKEND + '/api/customer/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+          });
+          var data = await resp.json().catch(function() { return null; });
+          if (!data || !data.ok) {
+            if (data && data.error && data.error.indexOf('登录') !== -1) {
+              customerLoggedIn = false;
+              initCustomerChat();
+            }
+            console.warn('消息发送失败', data && data.error);
+            return;
+          }
+          loadCustomerMessages();
+        } catch (err) {
+          console.error('发送消息失败', err);
+        }
+      }
+
+      // 表情数据
+      const emojis = [
+        '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣',
+        '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰',
+        '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜',
+        '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏',
+        '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖',
+        '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡',
+        '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰',
+        '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶',
+        '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮',
+        '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴',
+        '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠',
+        '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙',
+        '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💪',
+        '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
+        '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
+        '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉', '☸️',
+        '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈',
+        '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐',
+        '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️'
+      ];
+
+      // 初始化表情选择器
+      const emojiPicker = document.getElementById('emojiPicker');
+      const emojiGrid = document.getElementById('emojiGrid');
+      const emojiBtn = document.getElementById('emojiBtn');
+      const chatInput = document.getElementById('chatInput');
+      
+      // 渲染表情
+      emojis.forEach(emoji => {
+        const emojiItem = document.createElement('div');
+        emojiItem.className = 'emoji-item';
+        emojiItem.textContent = emoji;
+        emojiItem.addEventListener('click', function() {
+          const cursorPos = chatInput.selectionStart;
+          const textBefore = chatInput.value.substring(0, cursorPos);
+          const textAfter = chatInput.value.substring(cursorPos);
+          chatInput.value = textBefore + emoji + textAfter;
+          chatInput.focus();
+          chatInput.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+          emojiPicker.classList.remove('emoji-picker--show');
+        });
+        emojiGrid.appendChild(emojiItem);
+      });
+
+      // 表情按钮点击事件
+      emojiBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        emojiPicker.classList.toggle('emoji-picker--show');
+      });
+
+      // 点击其他地方关闭表情选择器
+      document.addEventListener('click', function(e) {
+        if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+          emojiPicker.classList.remove('emoji-picker--show');
+        }
+      });
+
+      // 图片上传功能
+      const imageBtn = document.getElementById('imageBtn');
+      const imageUpload = document.getElementById('imageUpload');
+      window.currentImageData = null; // 使用window对象使其全局可访问
+
+      imageBtn.addEventListener('click', function() {
+        imageUpload.click();
+      });
+
+      imageUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 检查文件类型
+        if (!file.type.startsWith('image/')) {
+          alert('请选择图片文件！');
+          return;
+        }
+
+        // 检查文件大小（限制为5MB）
+        if (file.size > 5 * 1024 * 1024) {
+          alert('图片大小不能超过5MB！');
+          return;
+        }
+
+        // 读取图片并显示预览
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          window.currentImageData = e.target.result;
+          
+          // 移除旧的预览
+          const oldPreview = document.getElementById('imagePreview');
+          if (oldPreview) {
+            oldPreview.remove();
+          }
+
+          // 创建预览
+          const previewContainer = document.createElement('div');
+          previewContainer.id = 'imagePreview';
+          previewContainer.className = 'image-preview-container';
+          previewContainer.style.cssText = 'margin-top: 12px; margin-left: 48px;';
+          
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'image-remove';
+          removeBtn.textContent = '×';
+          removeBtn.addEventListener('click', function() {
+            previewContainer.remove();
+            window.currentImageData = null;
+            imageUpload.value = '';
+          });
+          
+          const img = document.createElement('img');
+          img.src = window.currentImageData;
+          img.alt = '预览图片';
+          img.className = 'image-preview';
+          
+          previewContainer.appendChild(img);
+          previewContainer.appendChild(removeBtn);
+          
+          const inputContainer = document.querySelector('.input-container');
+          inputContainer.appendChild(previewContainer);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // 发送按钮点击事件
+      document.getElementById('sendBtn').addEventListener('click', function() {
+        const message = chatInput.value.trim();
+        sendMessage(message, window.currentImageData);
+        // 清空图片数据和预览
+        window.currentImageData = null;
+        imageUpload.value = '';
+        const preview = document.getElementById('imagePreview');
+        if (preview) {
+          preview.remove();
+        }
+      });
+
+      // 回车发送消息
+      chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const message = this.value.trim();
+          if (message || window.currentImageData) {
+            sendMessage(message, window.currentImageData);
+            // 清空图片数据和预览
+            window.currentImageData = null;
+            imageUpload.value = '';
+            const preview = document.getElementById('imagePreview');
+            if (preview) {
+              preview.remove();
+            }
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

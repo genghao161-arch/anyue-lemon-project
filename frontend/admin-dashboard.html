@@ -1,0 +1,1614 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>石刻护柠 · 后台管理系统</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+    <style>
+      .admin-layout {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        min-height: calc(100vh - 64px);
+        background: #f6f4ef;
+        align-items: flex-start;
+      }
+      .admin-sidebar {
+        background: linear-gradient(180deg, #f2d27c, #e4bc5a);
+        color: #4a3512;
+        padding: 24px 16px;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+        position: sticky;
+        top: 64px;
+        align-self: flex-start;
+        height: calc(100vh - 64px);
+        overflow-y: auto;
+      }
+      .admin-sidebar__logo {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 24px;
+      }
+      .admin-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .admin-menu__item {
+        position: relative;
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+      /* 客服管理有未读消息时右上角红点 */
+      .admin-menu__dot {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        background: #e74c3c;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.9);
+        box-shadow: 0 1px 2px rgba(231,76,60,0.5);
+        pointer-events: none;
+        display: none;
+      }
+      .admin-menu__dot.is-visible {
+        display: block;
+      }
+      .admin-menu__item--active {
+        background: rgba(255,255,255,0.9);
+        font-weight: 600;
+      }
+      .admin-content {
+        padding: 20px 24px 32px;
+      }
+      .admin-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        align-items: flex-start;
+      }
+      .admin-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 12px rgba(33,24,10,0.06);
+        margin-bottom: 20px;
+      }
+      .admin-card__title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--ink, #3b2a18);
+      }
+      .admin-products-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .admin-products-table th,
+      .admin-products-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        text-align: left;
+      }
+      .admin-products-table th {
+        font-weight: 600;
+        background: #faf6ec;
+      }
+      .admin-products-toolbar {
+        background: #fff;
+        border-radius: 16px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 12px rgba(33,24,10,0.06);
+        margin-bottom: 20px;
+      }
+      .admin-products-toolbar__row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 14px 20px;
+      }
+      .admin-products-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 14px 20px;
+        flex: 1;
+        min-width: 0;
+      }
+      .admin-products-filters__item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .admin-products-filters__item label {
+        font-size: 12px;
+        color: var(--muted, #806f5c);
+        font-weight: 500;
+      }
+      .admin-products-filters__item .admin-input,
+      .admin-products-filters__item .admin-select {
+        min-width: 140px;
+      }
+      .admin-products-filters__actions {
+        flex-direction: row;
+        gap: 8px;
+      }
+      .admin-products-filters__publish {
+        margin-left: auto;
+        flex-direction: row;
+      }
+      .admin-products-tabs {
+        display: flex;
+        gap: 6px;
+      }
+      .admin-products-tab {
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,0,0,0.12);
+        background: #fff;
+        font-size: 13px;
+        color: var(--muted, #7b6750);
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s, color 0.2s;
+      }
+      .admin-products-tab:hover {
+        background: #faf6ec;
+        border-color: rgba(200,176,106,0.4);
+        color: var(--ink, #3b2a18);
+      }
+      .admin-products-tab--active {
+        background: linear-gradient(135deg, var(--accent, #c8b06a), var(--accent2, #b6984f));
+        border-color: transparent;
+        color: #fff;
+      }
+      .admin-card--table .admin-products-table {
+        margin-top: 0;
+      }
+      .admin-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        background: rgba(200,176,106,0.16);
+        color: #8a6a2c;
+      }
+      .admin-status-on {
+        color: #1b8a3b;
+      }
+      .admin-status-off {
+        color: #c0392b;
+      }
+      .admin-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .admin-form label {
+        font-size: 12px;
+        color: var(--muted, #806f5c);
+      }
+      .admin-input,
+      .admin-select,
+      .admin-textarea {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+      .admin-textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+      .admin-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .admin-btn--primary {
+        background: linear-gradient(135deg, var(--accent, #c8b06a), var(--accent2, #b6984f));
+        color: #fff;
+      }
+      .admin-btn--ghost {
+        background: transparent;
+        border: 1px solid rgba(0,0,0,0.12);
+        color: var(--muted, #7b6750);
+      }
+      /* 商品编辑右侧分组块：分类 / 基本信息 / 规格与库存 */
+      .admin-form-group {
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.06);
+        background: #faf6ec;
+        padding: 12px 14px 14px;
+        margin-bottom: 12px;
+      }
+      .admin-form-group__title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted,#7b6750);
+        margin-bottom: 8px;
+      }
+      /* 商品规格编辑 */
+      .admin-spec-group {
+        border-radius: 10px;
+        border: 1px dashed rgba(0,0,0,0.18);
+        background: #fffdf7;
+        padding: 10px 10px 12px;
+        margin-bottom: 10px;
+      }
+      .admin-spec-group__header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .admin-spec-group__name {
+        flex: 1;
+      }
+      .admin-spec-values {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .admin-spec-value {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex: 1 1 100%;
+      }
+      .admin-spec-value__text {
+        flex: 0 0 96px;
+      }
+      .admin-spec-value__img {
+        flex: 1 1 auto;
+      }
+      .admin-spec-actions {
+        display: flex;
+        gap: 6px;
+        font-size: 12px;
+      }
+      .admin-spec-link-btn {
+        border: 1px solid rgba(182,152,64,0.4);
+        background: rgba(255,255,255,0.9);
+        color: var(--accent2,#b6984f);
+        cursor: pointer;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        line-height: 1.2;
+        white-space: nowrap;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .admin-spec-link-btn:hover {
+        background: linear-gradient(135deg, rgba(200,176,106,0.12), rgba(182,152,64,0.16));
+        border-color: rgba(182,152,64,0.7);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      }
+      .admin-sku-tip {
+        font-size: 12px;
+        color: #c86a1e;
+        margin: 0 0 12px 0;
+        padding: 8px 10px;
+        background: rgba(230,160,60,0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(200,106,30,0.2);
+      }
+      .admin-sku-bulk {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .admin-sku-bulk__label { font-size: 13px; color: var(--muted,#7b6750); white-space: nowrap; }
+      .admin-sku-bulk__input { width: 100px; padding: 6px 8px; font-size: 13px; }
+      .admin-sku-table-wrap {
+        overflow-x: auto;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 10px;
+        background: #fff;
+      }
+      .admin-sku-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .admin-sku-table th,
+      .admin-sku-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        text-align: left;
+        vertical-align: middle;
+      }
+      .admin-sku-table th { background: #f8f6f2; font-weight: 600; color: var(--ink,#3b2a18); white-space: nowrap; }
+      .admin-sku-table tbody tr:last-child td { border-bottom: none; }
+      .admin-sku-table .admin-input { width: 100%; min-width: 70px; padding: 6px 8px; font-size: 13px; }
+      .admin-sku-table .admin-sku-cell-spec { white-space: nowrap; color: var(--muted,#7b6750); }
+      .admin-sku-table .admin-sku-preview { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; vertical-align: middle; }
+      .admin-sku-empty {
+        color: var(--muted,#7b6750);
+        font-size: 12px;
+        padding: 16px !important;
+        text-align: center;
+      }
+      /* 图片预览相关 */
+      .admin-img-preview-box {
+        margin-top: 8px;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 8px;
+        background: #fafafa;
+        padding: 8px;
+        max-width: 200px;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .admin-img-preview-box img {
+        max-width: 100%;
+        max-height: 140px;
+        border-radius: 6px;
+        object-fit: contain;
+      }
+      .admin-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .admin-gallery-item {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .admin-gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .admin-gallery-remove {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 18px;
+        height: 18px;
+        background: rgba(0,0,0,0.6);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        transition: background 0.2s;
+      }
+      .admin-gallery-remove:hover {
+        background: rgba(220,50,50,0.9);
+      }
+
+      /* SKU 表格图片上传 */
+      .admin-sku-uploader {
+        width: 40px;
+        height: 40px;
+        border: 1px dashed #ccc;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fafafa;
+        overflow: hidden;
+      }
+      .admin-sku-uploader:hover {
+        border-color: var(--primary,#bfa15f);
+        background: #fff;
+      }
+      .admin-sku-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+      }
+      .admin-sku-upload-placeholder {
+        font-size: 18px;
+        color: #999;
+        line-height: 1;
+      }
+      .admin-sku-remove {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 14px;
+        height: 14px;
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        font-size: 10px;
+        line-height: 14px;
+        text-align: center;
+        cursor: pointer;
+        display: none;
+        z-index: 2;
+      }
+      .admin-sku-uploader.has-img .admin-sku-thumb { display: block; }
+      .admin-sku-uploader.has-img .admin-sku-upload-placeholder { display: none; }
+      .admin-sku-uploader.has-img:hover .admin-sku-remove { display: block; }
+      .admin-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .admin-toolbar__title {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .admin-badge {
+        font-size: 12px;
+        color: var(--muted, #7b6750);
+      }
+      /* 客服管理：左侧会话列表 + 右侧聊天区（左右独立滚动） */
+      .admin-customer-wrap {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 0;
+        height: 560px;
+        min-height: 560px;
+        max-height: calc(100vh - 180px);
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(33,24,10,0.08);
+        overflow: hidden;
+      }
+      .admin-customer-sidebar {
+        border-right: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+        background: linear-gradient(180deg, #fdfbf7 0%, #f8f5ef 100%);
+      }
+      .admin-customer-sidebar__header {
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+      }
+      .admin-customer-sidebar__title { font-size: 17px; font-weight: 600; color: var(--ink, #3b2a18); }
+      .admin-customer-sidebar__badge {
+        font-size: 12px;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--accent, #c8b06a), var(--accent2, #b6984f));
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(200,176,106,0.3);
+      }
+      .admin-customer-search {
+        padding: 12px 16px;
+      }
+      .admin-customer-search .admin-input {
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 13px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.08);
+        background: #fff;
+      }
+      .admin-customer-search .admin-input::placeholder { color: #aaa; }
+      .admin-customer-conversations {
+        list-style: none;
+        margin: 0;
+        padding: 8px 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        flex: 1;
+        min-height: 0;
+      }
+      .admin-customer-conv {
+        padding: 14px 18px;
+        margin: 0 10px 4px;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      .admin-customer-conv:hover { background: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+      .admin-customer-conv--active {
+        background: linear-gradient(135deg, rgba(200,176,106,0.2), rgba(230,215,170,0.25));
+        box-shadow: 0 2px 12px rgba(200,176,106,0.2);
+      }
+      .admin-customer-conv--placeholder {
+        cursor: default;
+        color: var(--muted, #7b6750);
+        font-size: 13px;
+        justify-content: center;
+        margin: 20px 16px;
+      }
+      .admin-customer-conv__avatar-wrap {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .admin-customer-conv__avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #e4bc5a, #c8b06a);
+        box-shadow: 0 2px 8px rgba(200,176,106,0.35);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+      }
+      /* 有新消息时头像右上角小红点 */
+      .admin-customer-conv__dot {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        background: #e74c3c;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 4px rgba(231,76,60,0.5);
+        z-index: 1;
+        pointer-events: none;
+      }
+      .admin-customer-conv__body { flex: 1; min-width: 0; }
+      .admin-customer-conv__name { font-weight: 600; font-size: 14px; color: var(--ink, #3b2a18); }
+      .admin-customer-conv__preview { font-size: 12px; color: var(--muted, #7b6750); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+      .admin-customer-conv__time { font-size: 11px; color: var(--muted, #7b6750); flex-shrink: 0; }
+      .admin-customer-chat {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+        background: #faf8f5;
+      }
+      .admin-customer-chat__header {
+        padding: 18px 24px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        font-weight: 600;
+        font-size: 16px;
+        background: #fff;
+        color: var(--ink, #3b2a18);
+      }
+      .admin-customer-chat__history {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 20px 24px;
+        background: #faf8f5;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+      }
+      .admin-customer-chat__empty {
+        color: var(--muted, #7b6750);
+        font-size: 14px;
+        margin: 0;
+        padding: 24px;
+      }
+      /* 聊天气泡 + 头像行（类似微信：我的对话在右侧） */
+      .admin-customer-msg-wrapper {
+        display: flex;
+        width: 100%;
+        margin-bottom: 4px;
+        direction: ltr;
+        align-items: flex-start;
+      }
+      .admin-customer-msg-wrapper--left {
+        justify-content: flex-start;
+      }
+      /* 客服消息（含图片/富文本）：整行右对齐，不居中 */
+      .admin-customer-msg-wrapper--right {
+        justify-content: flex-end;
+        flex-direction: row;
+        text-align: right;
+        width: 100%;
+      }
+      .admin-customer-msg-wrapper--right .admin-customer-msg-row {
+        margin-left: auto;
+        flex: 0 0 auto;
+        display: inline-flex;
+        text-align: left;
+        max-width: 85%;
+        width: fit-content;
+      }
+      /* 左侧弹性占位，把客服行推到最右侧 */
+      .admin-customer-msg-spacer {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .admin-customer-msg-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        max-width: 85%;
+        flex-shrink: 0;
+      }
+      .admin-customer-msg-wrapper--left .admin-customer-msg-row {
+        display: flex;
+      }
+      .admin-customer-msg-row--left {
+        justify-content: flex-start;
+      }
+      .admin-customer-msg-row--right {
+        justify-content: flex-end;
+        flex-direction: row-reverse;
+      }
+      .admin-customer-msg__avatar {
+        width: 36px;
+        height: 36px;
+        min-height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        align-self: flex-start;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .admin-customer-msg__avatar--customer {
+        background: linear-gradient(135deg, #e4bc5a, #c8b06a);
+        box-shadow: 0 2px 8px rgba(200,176,106,0.35);
+      }
+      .admin-customer-msg__avatar--staff {
+        background: linear-gradient(135deg, var(--accent, #c8b06a), var(--accent2, #b6984f));
+        font-size: 12px;
+      }
+      .admin-customer-msg {
+        max-width: 320px;
+        min-width: 0;
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.5;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      }
+      /* 有图片的客服消息也保持右对齐：气泡不撑满行 */
+      .admin-customer-msg-row--right .admin-customer-msg {
+        align-self: flex-end;
+      }
+      .admin-customer-msg--customer {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.06);
+        border-bottom-left-radius: 4px;
+        color: var(--ink, #3b2a18);
+      }
+      .admin-customer-msg--staff {
+        background: linear-gradient(135deg, var(--accent, #c8b06a), var(--accent2, #b6984f));
+        color: #fff;
+        border-bottom-right-radius: 4px;
+      }
+      .admin-customer-msg__label {
+        font-size: 11px;
+        opacity: 0.85;
+        margin-bottom: 4px;
+      }
+      .admin-customer-msg__content { margin: 0; word-break: break-word; }
+      .admin-customer-msg__time { font-size: 11px; opacity: 0.8; margin-top: 6px; }
+      .admin-customer-msg__img { max-width: 100%; border-radius: 8px; margin-top: 8px; display: block; }
+      .admin-customer-chat__input-wrap {
+        border-top: 1px solid rgba(0,0,0,0.06);
+        padding: 16px 24px;
+        background: #fff;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
+        position: relative;
+        z-index: 5;
+      }
+
+      /* 时间分割条（类似微信：不每条都显示） */
+      .admin-customer-time-sep {
+        align-self: center;
+        font-size: 12px;
+        color: rgba(123,103,80,0.85);
+        background: rgba(255,255,255,0.75);
+        border: 1px solid rgba(0,0,0,0.06);
+        padding: 4px 10px;
+        border-radius: 999px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        margin: 6px 0 2px;
+      }
+
+      /* 表情选择器（简版） */
+      .admin-emoji-picker {
+        position: absolute;
+        left: 20px;
+        bottom: 92px;
+        width: min(360px, calc(100% - 40px));
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        padding: 10px 10px 12px;
+      }
+      .admin-emoji-picker__grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 6px;
+      }
+      .admin-emoji-btn {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        padding: 6px 0;
+        border-radius: 10px;
+      }
+      .admin-emoji-btn:hover { background: rgba(0,0,0,0.06); }
+      /* 图片选取裁剪框：半透明遮罩 + 中间选择框 */
+      .admin-crop-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.75);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 16px 16px 24px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, visibility 0.2s;
+      }
+      .admin-crop-overlay.is-visible {
+        opacity: 1;
+        visibility: visible;
+      }
+      .admin-crop-title {
+        color: #fff;
+        font-size: 15px;
+        margin-bottom: 12px;
+        flex-shrink: 0;
+      }
+      .admin-crop-zoom {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-shrink: 0;
+      }
+      .admin-crop-zoom button {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.4);
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+        font-size: 20px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, border-color 0.2s;
+      }
+      .admin-crop-zoom button:hover {
+        background: rgba(255,255,255,0.22);
+        border-color: rgba(255,255,255,0.6);
+      }
+      .admin-crop-zoom button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .admin-crop-zoom__value {
+        min-width: 52px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .admin-crop-wrap {
+        position: relative;
+        max-width: 100%;
+        max-height: min(55vh, 400px);
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+        isolation: isolate;
+      }
+      .admin-crop-wrap img {
+        display: block;
+        max-width: 100%;
+        max-height: min(55vh, 400px);
+        object-fit: contain;
+        vertical-align: top;
+      }
+      .admin-crop-mask {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .admin-crop-selection {
+        position: absolute;
+        border: 2px solid rgba(255,255,255,0.9);
+        border-radius: 4px;
+        box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+        cursor: move;
+        box-sizing: border-box;
+      }
+      .admin-crop-actions {
+        display: flex;
+        gap: 14px;
+        margin-top: 20px;
+        justify-content: center;
+        flex-shrink: 0;
+        padding: 16px 20px 20px;
+        position: relative;
+        z-index: 10;
+        background: rgba(0,0,0,0.75);
+        border-radius: 12px;
+      }
+      .admin-crop-actions .admin-btn {
+        min-width: 110px;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: 10px;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+      }
+      .admin-crop-actions .admin-btn:hover {
+        transform: translateY(-1px);
+      }
+      .admin-crop-actions .admin-btn:active {
+        transform: translateY(0);
+      }
+      /* 裁剪弹窗内取消：深色背景下的描边按钮 */
+      .admin-crop-actions .admin-btn--ghost {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.35);
+        color: #fff;
+      }
+      .admin-crop-actions .admin-btn--ghost:hover {
+        background: rgba(255,255,255,0.15);
+        border-color: rgba(255,255,255,0.5);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      }
+      /* 裁剪弹窗内确定：主色渐变 + 阴影 */
+      .admin-crop-actions .admin-btn--primary {
+        background: linear-gradient(135deg, #d4b85c, #b89840);
+        color: #fff;
+        border: none;
+        box-shadow: 0 4px 14px rgba(184,152,64,0.4);
+      }
+      .admin-crop-actions .admin-btn--primary:hover {
+        box-shadow: 0 6px 20px rgba(184,152,64,0.5);
+      }
+      /* 上传成功等提示：非模态 toast，避免点击“确定”穿透导致表单被清空 */
+      .admin-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        padding: 12px 20px;
+        background: rgba(39, 174, 96, 0.95);
+        color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        font-size: 14px;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s, visibility 0.25s;
+        pointer-events: none;
+        max-width: 90%;
+      }
+      .admin-toast.is-visible {
+        opacity: 1;
+        visibility: visible;
+      }
+      .admin-customer-chat__toolbar { margin-bottom: 10px; }
+      .admin-customer-chat__tool-btn {
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px 10px;
+        margin-right: 4px;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+      .admin-customer-chat__tool-btn:hover { background: rgba(0,0,0,0.05); }
+      .admin-customer-chat__input-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+      }
+      .admin-customer-chat__input {
+        flex: 1;
+        resize: none;
+        min-height: 56px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+      .admin-customer-chat__send { flex-shrink: 0; padding: 12px 20px; border-radius: 12px; font-weight: 600; }
+      @media (max-width: 900px) {
+        .admin-layout {
+          grid-template-columns: 1fr;
+        }
+        .admin-sidebar {
+          display: none;
+        }
+        .admin-grid {
+          grid-template-columns: 1fr;
+        }
+        .admin-customer-wrap {
+          grid-template-columns: 1fr;
+          min-height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 头部：保持与 index.html 一致 -->
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="admin-layout">
+      <aside class="admin-sidebar">
+        <div class="admin-sidebar__logo">后台管理系统</div>
+        <ul class="admin-menu" id="adminMenu">
+          <li class="admin-menu__item admin-menu__item--active" data-section="dashboard">仪表板</li>
+          <li class="admin-menu__item" data-section="products">商品管理</li>
+          <li class="admin-menu__item" data-section="activities">活动管理</li>
+          <li class="admin-menu__item" data-section="stores">门店管理</li>
+          <li class="admin-menu__item" data-section="users">账户管理</li>
+          <li class="admin-menu__item" data-section="customer">客服管理<span class="admin-menu__dot" id="customerNavDot" aria-hidden="true"></span></li>
+          <li class="admin-menu__item">
+            <a href="http://127.0.0.1:8000/admin/" target="_blank" style="color:inherit;text-decoration:none;display:block;width:100%;height:100%;">
+              系统后台 <small style="opacity:0.6;font-size:12px;">(Django)</small>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <section class="admin-content">
+        <div class="admin-toolbar">
+          <div class="admin-toolbar__title" id="adminSectionTitle">仪表板概览</div>
+          <div class="admin-badge" id="adminUserInfo">加载中...</div>
+        </div>
+
+        <!-- 仪表板 -->
+        <section id="section-dashboard">
+          <div class="admin-card">
+            <div class="admin-card__title">统计概览</div>
+            <p style="font-size:13px; color:var(--muted,#7b6750); margin-bottom:12px;">
+              欢迎回来，这里是石刻护柠的运营驾驶舱。下方数据来自当前数据库中的商品、活动与门店。
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+              <div class="admin-card" style="margin-bottom:0;box-shadow:none;border:1px solid rgba(0,0,0,0.04);">
+                <div class="admin-card__title" style="font-size:13px;">商品总数</div>
+                <div id="statProductCount" style="font-size:22px;font-weight:700;">-</div>
+              </div>
+              <div class="admin-card" style="margin-bottom:0;box-shadow:none;border:1px solid rgba(0,0,0,0.04);">
+                <div class="admin-card__title" style="font-size:13px;">活动总数</div>
+                <div id="statActivityCount" style="font-size:22px;font-weight:700;">-</div>
+              </div>
+              <div class="admin-card" style="margin-bottom:0;box-shadow:none;border:1px solid rgba(0,0,0,0.04);">
+                <div class="admin-card__title" style="font-size:13px;">门店总数</div>
+                <div id="statStoreCount" style="font-size:22px;font-weight:700;">-</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 商品管理（参考电商后台：分类仅保留原三类） -->
+        <section id="section-products" style="display:none;">
+          <div class="admin-products-toolbar">
+            <div class="admin-products-toolbar__row">
+              <div class="admin-products-filters">
+              <div class="admin-products-filters__item">
+                <label for="apCategoryFilter">商品分类</label>
+                <select id="apCategoryFilter" class="admin-select">
+                  <option value="">全部</option>
+                  <option value="fresh">鲜柠檬</option>
+                  <option value="processed">深加工品</option>
+                  <option value="cultural">石窟文创</option>
+                </select>
+              </div>
+              <div class="admin-products-filters__item">
+                <label for="apSearchInput">商品名称 / ID</label>
+                <input id="apSearchInput" class="admin-input" type="text" placeholder="输入关键词筛选" />
+              </div>
+              <div class="admin-products-filters__item">
+                <label for="apStatusFilterAll">状态</label>
+                <div class="admin-products-tabs">
+                  <button type="button" id="apStatusFilterAll" class="admin-products-tab admin-products-tab--active" data-status="">全部</button>
+                  <button type="button" class="admin-products-tab" data-status="1">在售中</button>
+                  <button type="button" class="admin-products-tab" data-status="0">已下架</button>
+                </div>
+              </div>
+              <div class="admin-products-filters__item admin-products-filters__actions">
+                <button type="button" id="apQueryBtn" class="admin-btn admin-btn--ghost">查询</button>
+                <button type="button" id="apResetFilterBtn" class="admin-btn admin-btn--ghost">重置</button>
+              </div>
+              <div class="admin-products-filters__item admin-products-filters__publish">
+                <button type="button" id="apPublishNewBtn" class="admin-btn admin-btn--primary">发布新商品</button>
+              </div>
+            </div>
+          </div>
+          <div class="admin-grid">
+            <div>
+              <div class="admin-card admin-card--table">
+                <table class="admin-products-table" id="adminProductsTable">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>标题</th>
+                      <th>分类</th>
+                      <th>价格</th>
+                      <th>库存</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <div class="admin-card">
+                <div class="admin-card__title">编辑 / 新增商品</div>
+                <form id="adminProductForm" class="admin-form" onsubmit="return false;" action="javascript:void(0)">
+                  <!-- 1. 选择分类 -->
+                  <div class="admin-form-group">
+                    <div class="admin-form-group__title">1 · 选择分类</div>
+                    <div>
+                      <label for="apCategory">分类</label>
+                      <select id="apCategory" class="admin-select">
+                        <option value="fresh">鲜柠檬</option>
+                        <option value="processed">深加工品</option>
+                        <option value="cultural">石窟文创</option>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- 2. 基本信息 -->
+                  <div class="admin-form-group">
+                    <div class="admin-form-group__title">2 · 基本信息</div>
+                    <div>
+                      <label for="apId">商品 ID（必填，唯一）</label>
+                      <input id="apId" class="admin-input" type="text" placeholder="例如 fresh-3" />
+                    </div>
+                    <div>
+                      <label for="apTitle">标题</label>
+                      <input id="apTitle" class="admin-input" type="text" />
+                    </div>
+                    <div>
+                      <label for="apTag">标签</label>
+                      <input id="apTag" class="admin-input" type="text" placeholder="显示在卡片上的标签" />
+                    </div>
+                    <div>
+                      <label for="apImg">图片预览（主图）</label>
+                      <input id="apImg" type="hidden" />
+                      <div id="apImgPreviewBox" class="admin-img-preview-box">
+                        <img id="apImgPreview" src="" alt="主图预览" style="display:none; max-width:100%; max-height:120px; object-fit:contain; border-radius:6px;" />
+                        <span id="apImgPreviewPlaceholder" style="font-size:12px;color:var(--muted);">暂无图片</span>
+                      </div>
+                      <!-- 上传主图 -->
+                      <div style="margin-top:8px; padding:10px; background:rgba(0,0,0,0.02); border-radius:6px;">
+                        <label for="apImgFile" style="font-size:12px;">上传主图（文件）</label>
+                        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                          <input id="apImgFile" class="admin-input" type="file" accept="image/*" style="font-size:12px;" />
+                          <button type="button" id="apUploadImgBtn" class="admin-btn admin-btn--ghost" style="white-space:nowrap; font-size:12px; padding:4px 8px; height:auto;">上传并填入</button>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted,#7b6750);margin-top:4px;">支持 jpg/png/webp/gif，≤5MB。上传后会自动填入“图片 URL”。</div>
+                      </div>
+                    </div>
+                    <div>
+                      <label>其他图片预览</label>
+                      <textarea id="apImages" class="admin-textarea" style="display:none;"></textarea>
+                      <div id="apImagesGallery" class="admin-gallery"></div>
+                      <!-- 上传其他图片 -->
+                      <div style="margin-top:8px; padding:10px; background:rgba(0,0,0,0.02); border-radius:6px;">
+                        <label for="apImagesFiles" style="font-size:12px;">上传其他图片（文件，可多选）</label>
+                        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                          <input id="apImagesFiles" class="admin-input" type="file" accept="image/*" multiple style="font-size:12px;" />
+                          <button type="button" id="apUploadImagesBtn" class="admin-btn admin-btn--ghost" style="white-space:nowrap; font-size:12px; padding:4px 8px; height:auto;">上传并追加</button>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted,#7b6750);margin-top:4px;">会将上传后的 URL 追加到“其他图片”中（每行一条）。</div>
+                      </div>
+                    </div>
+                    <div>
+                      <label for="apTaobao">淘宝链接</label>
+                      <input id="apTaobao" class="admin-input" type="text" />
+                    </div>
+                    <div>
+                      <label for="apDesc">描述</label>
+                      <textarea id="apDesc" class="admin-textarea"></textarea>
+                    </div>
+                  </div>
+                  <!-- 3. 规格 -->
+                  <div class="admin-form-group">
+                    <div class="admin-form-group__title">3 · 规格</div>
+                    <div>
+                      <label for="apPrice">价格（元）</label>
+                      <input id="apPrice" class="admin-input" type="number" step="0.1" />
+                    </div>
+                    <div>
+                      <label for="apStock">库存</label>
+                      <input id="apStock" class="admin-input" type="number" min="0" placeholder="0" />
+                    </div>
+                    <div>
+                      <label for="apStatus">状态</label>
+                      <select id="apStatus" class="admin-select">
+                        <option value="1">上架</option>
+                        <option value="0">下架</option>
+                      </select>
+                    </div>
+                    <div style="margin-top:8px;font-size:12px;color:var(--muted,#7b6750);">
+                      商品规格（可选）：例如“重量”、“口味”，每个规格值可绑定一张图片 URL。
+                    </div>
+                    <div id="apSpecsContainer" style="margin-top:8px;"></div>
+                    <div class="admin-spec-actions" style="margin-top:4px;">
+                      <button type="button" id="apAddSpecGroup" class="admin-spec-link-btn">添加商品规格</button>
+                    </div>
+                  </div>
+
+                  <!-- 价格及库存：按规格组合设置 -->
+                  <div class="admin-form-group" style="margin-top:24px;">
+                      <div class="admin-form-group__title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>4 · 价格及库存</span>
+                        <button type="button" id="apRefreshSkuBtn" class="admin-btn admin-btn--ghost" style="font-size:12px; padding: 2px 8px; height:auto;">刷新规格表</button>
+                      </div>
+                      <p class="admin-sku-tip">请如实填写库存信息，以确保商品可以在承诺发货时间内发出，避免可能的物流违规。</p>
+                      <div class="admin-sku-bulk" id="apSkuBulk">
+                        <span class="admin-sku-bulk__label">批量设置：</span>
+                        <input type="number" id="apSkuBulkStock" class="admin-input admin-sku-bulk__input" placeholder="库存" min="0" />
+                        <input type="number" id="apSkuBulkPrice" class="admin-input admin-sku-bulk__input" step="0.01" placeholder="价格(元)" min="0" />
+                        <input type="text" id="apSkuBulkImg" class="admin-input admin-sku-bulk__input" placeholder="预览图 URL" />
+                        <button type="button" id="apSkuBulkApply" class="admin-btn admin-btn--ghost">应用到下方全部</button>
+                      </div>
+                      <div class="admin-sku-table-wrap">
+                        <table class="admin-sku-table" id="apSkuTable">
+                          <thead id="apSkuTableHead">
+                            <tr><th>规格</th><th>*库存</th><th>*价格(元)</th><th>预览图</th><th>规格编码</th></tr>
+                          </thead>
+                          <tbody id="apSkuTableBody">
+                            <tr><td colspan="5" class="admin-sku-empty">请先添加上方「商品规格」并填写规格值，保存时将按规格组合生成；无规格时使用上方统一价格与库存。</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                  <!-- 5. 商品详情 -->
+                  <div class="admin-form-group" style="margin-top:24px;">
+                    <div class="admin-form-group__title">5 · 商品详情</div>
+                    
+                    <!-- 详情参数表格 -->
+                    <div style="margin-bottom:16px;">
+                      <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px;color:var(--muted,#7b6750);">参数表格 (品牌、货号等)</label>
+                      <div id="apDetailTableContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+                      <button type="button" id="apAddDetailRowBtn" class="admin-spec-link-btn" style="margin-top:8px;">+ 添加参数行</button>
+                    </div>
+
+                    <!-- 详情长图/海报 -->
+                    <div>
+                      <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px;color:var(--muted,#7b6750);">详情长图 (支持多张)</label>
+                      <div id="apDetailImagesContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+                      <button type="button" id="apAddDetailImageBtn" class="admin-spec-link-btn" style="margin-top:8px;">+ 添加详情图片</button>
+                    </div>
+                  </div>
+                  <input type="hidden" id="apIsEditing" value="0" />
+                </form>
+                <!-- 操作按钮放在最底部，方便统一提交 / 清空 -->
+                <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-start;">
+                  <button type="button" id="apSaveBtn" class="admin-btn admin-btn--primary">保存</button>
+                  <button type="button" id="apResetBtn" class="admin-btn admin-btn--ghost">清空表单</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 其他模块占位 -->
+        <section id="section-activities" style="display:none;">
+          <div class="admin-grid">
+            <!-- Left: Activity List -->
+            <div>
+              <div class="admin-card">
+                <div class="admin-card__title">活动列表</div>
+                <table class="admin-products-table" id="adminActivitiesTable">
+                  <thead>
+                    <tr>
+                      <th>标题</th>
+                      <th>点击数</th>
+                      <th>时间范围</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <div style="margin-top:12px;">
+                    <button type="button" id="aaRefreshBtn" class="admin-btn admin-btn--ghost" style="font-size:12px;">刷新列表</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Activity Form -->
+            <div>
+              <div class="admin-card">
+                <div class="admin-card__title">编辑 / 发布活动</div>
+                <form id="adminActivityForm" class="admin-form" onsubmit="return false;">
+                  <input type="hidden" id="aaId" />
+                  
+                  <div>
+                    <label for="aaTitle">活动标题 (必填)</label>
+                    <input id="aaTitle" class="admin-input" type="text" placeholder="输入活动名称" required />
+                  </div>
+                  
+                  <div>
+                    <label for="aaSubtitle">副标题</label>
+                    <input id="aaSubtitle" class="admin-input" type="text" placeholder="一句话描述" />
+                  </div>
+                  
+                  <div>
+                    <label for="aaDesc">活动详情</label>
+                    <textarea id="aaDesc" class="admin-textarea" rows="4" placeholder="活动详细介绍..."></textarea>
+                  </div>
+                  
+                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div>
+                      <label for="aaStartDate">开始时间</label>
+                      <input id="aaStartDate" class="admin-input" type="date" required />
+                    </div>
+                    <div>
+                      <label for="aaEndDate">结束时间</label>
+                      <input id="aaEndDate" class="admin-input" type="date" required />
+                    </div>
+                  </div>
+                  
+                  <!-- Cover Image -->
+                  <div>
+                    <label>封面图 (标题页展示)</label>
+                    <input id="aaCoverImg" type="hidden" />
+                    <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
+                        <div style="width:80px; height:80px; background:#f4f4f4; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                            <img id="aaCoverPreview" src="" style="width:100%; height:100%; object-fit:cover; display:none;" />
+                            <span id="aaCoverPlaceholder" style="font-size:12px; color:var(--muted);">无图</span>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input id="aaCoverFile" type="file" accept="image/*" style="font-size:12px; width:100%;" />
+                            </div>
+                            <button type="button" id="aaUploadCoverBtn" class="admin-btn admin-btn--ghost" style="font-size:12px; padding:4px 8px; margin-top:4px;">上传封面</button>
+                        </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Poster Image -->
+                  <div>
+                    <label>活动海报 (外部宣传)</label>
+                    <input id="aaPosterImg" type="hidden" />
+                    <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
+                        <div style="width:60px; height:90px; background:#f4f4f4; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                            <img id="aaPosterPreview" src="" style="width:100%; height:100%; object-fit:cover; display:none;" />
+                            <span id="aaPosterPlaceholder" style="font-size:12px; color:var(--muted);">无海报</span>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input id="aaPosterFile" type="file" accept="image/*" style="font-size:12px; width:100%;" />
+                            </div>
+                            <button type="button" id="aaUploadPosterBtn" class="admin-btn admin-btn--ghost" style="font-size:12px; padding:4px 8px; margin-top:4px;">上传海报</button>
+                        </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label for="aaStatus">状态</label>
+                    <select id="aaStatus" class="admin-select">
+                      <option value="active">进行中</option>
+                      <option value="draft">草稿</option>
+                      <option value="ended">已结束</option>
+                    </select>
+                  </div>
+
+                  <div style="display:flex; gap:8px; margin-top:16px;">
+                    <button type="submit" id="aaSaveBtn" class="admin-btn admin-btn--primary">保存活动</button>
+                    <button type="button" id="aaResetBtn" class="admin-btn admin-btn--ghost">清空表单</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-stores" style="display:none;">
+          <div class="admin-grid">
+            <div>
+              <div class="admin-card">
+                <div class="admin-card__title">门店列表</div>
+                <table class="admin-products-table" id="adminStoresTable">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>城市</th>
+                      <th>门店名称</th>
+                      <th>地址</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <div class="admin-card">
+                <div class="admin-card__title">编辑 / 新增门店</div>
+                <form id="adminStoreForm" class="admin-form">
+                  <input type="hidden" id="asId" />
+                  <div>
+                    <label for="asName">门店名称</label>
+                    <input id="asName" class="admin-input" type="text" />
+                  </div>
+                  <div>
+                    <label for="asCity">城市</label>
+                    <input id="asCity" class="admin-input" type="text" />
+                  </div>
+                  <div>
+                    <label for="asAddress">地址</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                      <input id="asAddress" class="admin-input" type="text" />
+                      <button type="button" id="asGeocodeBtn" class="admin-btn admin-btn--ghost" style="white-space:nowrap;">地址转坐标</button>
+                    </div>
+                    <div style="font-size:12px;color:var(--muted,#7b6750);margin-top:6px;">
+                      填好“城市/地址”后点此按钮，可自动填入经纬度（高德坐标）。
+                    </div>
+                  </div>
+                  <div>
+                    <label for="asLng">经度（lng，高德坐标）</label>
+                    <input id="asLng" class="admin-input" type="number" step="0.000001" placeholder="例如 116.468000" />
+                  </div>
+                  <div>
+                    <label for="asLat">纬度（lat，高德坐标）</label>
+                    <input id="asLat" class="admin-input" type="number" step="0.000001" placeholder="例如 39.908000" />
+                  </div>
+                  <div>
+                    <label for="asHours">营业时间</label>
+                    <input id="asHours" class="admin-input" type="text" placeholder="如 09:00-22:00" />
+                  </div>
+                  <div>
+                    <label for="asPhone">联系电话</label>
+                    <input id="asPhone" class="admin-input" type="text" placeholder="可选" />
+                  </div>
+                  <div>
+                    <label for="asStatus">状态</label>
+                    <select id="asStatus" class="admin-select">
+                      <option value="1">营业</option>
+                      <option value="0">关闭</option>
+                    </select>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button type="submit" class="admin-btn admin-btn--primary">保存</button>
+                    <button type="button" id="asResetBtn" class="admin-btn admin-btn--ghost">清空表单</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-users" style="display:none;">
+          <div class="admin-products-toolbar">
+            <div class="admin-products-toolbar__row">
+              <div class="admin-products-filters">
+                <div class="admin-products-filters__item">
+                  <label for="auSearchInput">手机号</label>
+                  <input id="auSearchInput" class="admin-input" type="text" placeholder="输入手机号筛选" />
+                </div>
+                <div class="admin-products-filters__item admin-products-filters__actions">
+                  <button type="button" id="auQueryBtn" class="admin-btn admin-btn--ghost">查询</button>
+                  <button type="button" id="auResetFilterBtn" class="admin-btn admin-btn--ghost">重置</button>
+                </div>
+                <div class="admin-products-filters__item admin-products-filters__publish">
+                  <button type="button" id="auCreateUserBtn" class="admin-btn admin-btn--primary">添加管理员</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="admin-grid">
+            <div style="grid-column: 1 / -1;">
+              <div class="admin-card admin-card--table">
+                <table class="admin-products-table" id="adminUsersTable">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>手机号 (用户名)</th>
+                      <th>注册时间</th>
+                      <th>最后登录</th>
+                      <th>身份</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 创建/编辑用户弹窗 (使用简单的覆盖层或就在页面上显示?) -->
+          <!-- 简单起见，我这里加一个隐藏的编辑区域，或者用 dialog，或者直接在上方加一个 card 用来新建 -->
+          <!-- 考虑到布局，点击“添加管理员”后，可以弹出一个简单的模态框，或者就在顶部展开一个表单。 -->
+          <!-- 这里使用 dialog 模态框风格 -->
+          <div id="userModal" class="admin-crop-overlay" style="display:none; align-items:center; justify-content:center;">
+             <div class="admin-card" style="width: 400px; max-width:90%; position:relative;">
+                <div class="admin-card__title" id="userModalTitle">添加用户</div>
+                <form id="adminUserForm" class="admin-form">
+                   <input type="hidden" id="auId" />
+                   <div>
+                      <label for="auPhone">手机号</label>
+                      <input id="auPhone" class="admin-input" type="text" placeholder="11位手机号" />
+                   </div>
+                   <div id="auPasswordGroup">
+                      <label for="auPassword">密码</label>
+                      <input id="auPassword" class="admin-input" type="text" placeholder="设置登录密码" />
+                   </div>
+                   <div>
+                      <label for="auIsStaff">身份权限</label>
+                      <select id="auIsStaff" class="admin-select">
+                         <option value="0">普通用户</option>
+                         <option value="1">管理员</option>
+                      </select>
+                   </div>
+                   <div>
+                      <label for="auIsActive">账号状态</label>
+                      <select id="auIsActive" class="admin-select">
+                         <option value="1">启用</option>
+                         <option value="0">禁用</option>
+                      </select>
+                   </div>
+                   <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                      <button type="button" id="auCancelBtn" class="admin-btn admin-btn--ghost">取消</button>
+                      <button type="button" id="auSaveBtn" class="admin-btn admin-btn--primary">保存</button>
+                   </div>
+                </form>
+             </div>
+          </div>
+        </section>
+
+        <section id="section-customer" style="display:none;">
+          <div class="admin-customer-wrap">
+            <aside class="admin-customer-sidebar">
+              <div class="admin-customer-sidebar__header">
+                <span class="admin-customer-sidebar__title">消息</span>
+                <span class="admin-customer-sidebar__badge" id="customerMsgCount">0</span>
+              </div>
+              <div class="admin-customer-search">
+                <input type="text" id="customerSearchInput" class="admin-input" placeholder="搜索最近联系人" aria-label="搜索最近联系人" />
+              </div>
+              <ul class="admin-customer-conversations" id="customerConversationList">
+                <li class="admin-customer-conv admin-customer-conv--placeholder">
+                  <span>暂无会话，接入客服后会话将显示在此</span>
+                </li>
+              </ul>
+            </aside>
+            <main class="admin-customer-chat">
+              <div class="admin-customer-chat__header" id="customerChatHeader">
+                <span class="admin-customer-chat__title">选择左侧会话开始回复</span>
+              </div>
+              <div class="admin-customer-chat__history" id="customerChatHistory">
+                <p class="admin-customer-chat__empty">选择会话后可在此查看聊天记录并回复客户消息。</p>
+              </div>
+              <div class="admin-customer-chat__input-wrap">
+                <div class="admin-customer-chat__toolbar">
+                  <button type="button" id="customerEmojiBtn" class="admin-customer-chat__tool-btn" aria-label="表情">😊</button>
+                  <button type="button" id="customerImageBtn" class="admin-customer-chat__tool-btn" aria-label="图片">🖼</button>
+                  <input type="file" id="customerImageInput" accept="image/*" style="display:none" />
+                </div>
+                <div id="customerEmojiPicker" class="admin-emoji-picker" hidden>
+                  <div class="admin-emoji-picker__grid" id="customerEmojiGrid"></div>
+                </div>
+                <div class="admin-customer-chat__input-row">
+                  <textarea id="customerMessageInput" class="admin-input admin-customer-chat__input" placeholder="请输入您想要回复的内容..." rows="3" aria-label="回复内容"></textarea>
+                  <button type="button" id="customerSendBtn" class="admin-btn admin-btn--primary admin-customer-chat__send">发送</button>
+                </div>
+              </div>
+            </main>
+          </div>
+        </section>
+      </section>
+    </main>
+    <div id="adminToast" class="admin-toast" aria-live="polite"></div>
+
+    <!-- 图片选取裁剪框：选择文件后弹出，确定后上传裁剪结果 -->
+    <div id="adminCropOverlay" class="admin-crop-overlay" role="dialog" aria-modal="true" aria-label="裁剪图片">
+      <p class="admin-crop-title">拖动选择框调整裁剪区域</p>
+      <div class="admin-crop-wrap" id="adminCropWrap">
+        <img id="adminCropImg" src="" alt="待裁剪图片" style="max-width: 100%; display: block;" />
+      </div>
+      <div class="admin-crop-actions">
+        <button type="button" id="adminCropCancel" class="admin-btn admin-btn--ghost">取消</button>
+        <button type="button" id="adminCropConfirm" class="admin-btn admin-btn--primary">确定裁剪并上传</button>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-dashboard.js?v=1.1"></script>
+  </body>
+</html>
+

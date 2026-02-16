@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>石刻护柠 · 活动</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回商品页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item nav__item--active" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page">
+      <section class="hero container">
+        <h1 class="hero__title">活动中心</h1>
+        <p class="hero__subtitle">石窟艺术 · 安岳风土 · 柠檬匠心</p>
+      </section>
+
+      <section class="container">
+        <div id="activitiesList" class="activities-list">
+          <!-- 活动卡片将通过JavaScript动态加载 -->
+        </div>
+      </section>
+    </main>
+
+    <style>
+      .activities-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-top: 30px;
+      }
+      
+      .activity-card {
+        display: flex;
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(33, 24, 10, 0.06);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+      }
+      
+      .activity-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 20px rgba(33, 24, 10, 0.12);
+      }
+      
+      .activity-card__image {
+        width: 300px;
+        min-width: 300px;
+        height: 200px;
+        object-fit: cover;
+        background: linear-gradient(135deg, rgba(200, 176, 106, 0.2), rgba(200, 176, 106, 0.1));
+      }
+      
+      .activity-card__content {
+        flex: 1;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      
+      .activity-card__header {
+        margin-bottom: 12px;
+      }
+      
+      .activity-card__badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      
+      .activity-card__badge--ended {
+        background: rgba(160, 140, 90, 0.3);
+        color: var(--muted);
+      }
+      
+      .activity-card__title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 8px 0;
+      }
+      
+      .activity-card__subtitle {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0 0 12px 0;
+      }
+      
+      .activity-card__description {
+        font-size: 14px;
+        color: var(--ink);
+        line-height: 1.6;
+        margin-bottom: 16px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      
+      .activity-card__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      
+      .activity-card__meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      
+      .activity-card__arrow {
+        color: var(--accent2);
+        font-size: 18px;
+      }
+      
+      @media (max-width: 768px) {
+        .activity-card {
+          flex-direction: column;
+        }
+        
+        .activity-card__image {
+          width: 100%;
+          min-width: 100%;
+          height: 180px;
+        }
+      }
+    </style>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/activities.js"></script>
+    <script>
+      // 渲染活动列表
+      function renderActivities(activities) {
+        const activitiesList = document.getElementById('activitiesList');
+        if (!activitiesList) return;
+        
+        if (!activities || activities.length === 0) {
+          activitiesList.innerHTML = `
+            <div class="card" style="text-align: center; padding: 60px 20px;">
+              <p style="color: var(--muted);">暂无活动，敬请期待！</p>
+            </div>
+          `;
+          return;
+        }
+        
+        activitiesList.innerHTML = activities.map(activity => {
+          const badgeClass = activity.status === 'ended' ? 'activity-card__badge--ended' : '';
+          const badgeText = activity.status === 'active' ? '进行中' : 
+                           activity.status === 'ended' ? '已结束' : '即将开始';
+          
+          return `
+            <a href="activity-detail.html?id=${activity.id}" class="activity-card">
+              <img src="${activity.coverImage}" alt="${activity.title}" class="activity-card__image" />
+              <div class="activity-card__content">
+                <div class="activity-card__header">
+                  <span class="activity-card__badge ${badgeClass}">${badgeText}</span>
+                  <h3 class="activity-card__title">${activity.title}</h3>
+                  <p class="activity-card__subtitle">${activity.subtitle}</p>
+                  <p class="activity-card__description">${activity.description}</p>
+                </div>
+                <div class="activity-card__footer">
+                  <div class="activity-card__meta">
+                    <span>📅 ${activity.startDate} - ${activity.endDate}</span>
+                    <span>👀 ${activity.clickCount || 0} 次点击</span>
+                  </div>
+                  <span class="activity-card__arrow">→</span>
+                </div>
+              </div>
+            </a>
+          `;
+        }).join('');
+      }
+      
+      document.addEventListener('DOMContentLoaded', function() {
+        // 先渲染本地兜底数据（如果有）
+        if (window.ACTIVITIES && window.ACTIVITIES.length > 0) {
+            renderActivities(window.ACTIVITIES);
+        }
+
+        // 获取后端数据
+        const API_BASE = typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : 'http://localhost:8000';
+        fetch(`${API_BASE}/api/activities`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.ok && Array.isArray(data.items)) {
+              // 如果有后端数据，覆盖渲染
+              renderActivities(data.items);
+            }
+          })
+          .catch(err => {
+            console.error('加载活动列表失败:', err);
+            // 失败时保持本地数据或显示空状态
+            if (!window.ACTIVITIES || window.ACTIVITIES.length === 0) {
+                 renderActivities([]);
+            }
+          });
+      });
+    </script>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
+

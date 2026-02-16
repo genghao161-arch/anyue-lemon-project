@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录注册 · 石刻护柠</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <img class="brand__logo" src="assets/logo.png" alt="石刻护柠 Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <span class="brand__text" style="display:none;">石刻护柠</span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav__item" href="weather.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 18.5h10.2a4.3 4.3 0 0 0 .5-8.6A6.2 6.2 0 0 0 6.1 8.4 4.4 4.4 0 0 0 7.5 18.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            天气
+          </a>
+          <a class="nav__item" href="index.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 8.2V7a4.5 4.5 0 0 1 9 0v1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.3 8.2h11.4l1 12.5H5.3l1-12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            商品
+          </a>
+          <a class="nav__item" href="activate.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6.6 4.8h9.7a2.2 2.2 0 0 1 2.2 2.2v12.2a2.2 2.2 0 0 0-2.2-2.2H6.6a2.2 2.2 0 0 0-2.2 2.2V7a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.2 7.6h7.1M8.2 10.4h7.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            活动
+          </a>
+          <a class="nav__item" href="store.html">
+            <span class="nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            门店
+          </a>
+        </nav>
+
+        <div class="topbar__right">
+          <a class="toplink" href="favorites.html">我的收藏</a>
+          <div class="topbar__auth" id="authArea">
+            <a class="toplink toplink--active" href="login.html" id="authLink">登录注册</a>
+          </div>
+        </div>
+      </div>
+      <div class="topbar__divider"></div>
+    </header>
+
+    <main class="page page--login">
+      <section class="container">
+        <div class="login-container">
+          <div class="login-card">
+            <!-- 左侧表单区域 -->
+            <div class="login-card__form">
+            <div class="login-tabs">
+              <button class="login-tab login-tab--active" data-mode="login">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>登录</span>
+              </button>
+              <button class="login-tab" data-mode="register">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="9" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>注册</span>
+              </button>
+            </div>
+
+              <!-- 标题区域 -->
+              <div class="login-form__header">
+                <h1 class="login-form__title">登录到 石刻护柠</h1>
+                <p class="login-form__subtitle">简单轻松，一步上云，立刻登录到 石刻护柠</p>
+              </div>
+
+              <!-- 登录表单 -->
+              <form class="login-form login-form--active" id="loginForm">
+                <div class="form-group">
+                  <input type="tel" id="loginPhone" class="form-input" placeholder="电话号码" required />
+                </div>
+                <div class="form-group">
+                  <input type="password" id="loginPassword" class="form-input" placeholder="密码" required />
+                </div>
+              <div class="form-options">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="rememberMe" />
+                  <span>记住密码</span>
+                </label>
+                <a href="#" class="form-link">忘记密码？</a>
+              </div>
+                <button type="submit" class="login-btn">立刻登录</button>
+                <p class="login-form__footer">没有账户吗? <a href="#" id="switchToRegister">立即注册</a></p>
+              </form>
+
+              <!-- 注册表单 -->
+              <form class="login-form" id="registerForm">
+                <div class="form-group">
+                  <input type="text" id="registerName" class="form-input" placeholder="用户名" required />
+                </div>
+                <div class="form-group">
+                  <input type="tel" id="registerPhone" class="form-input" placeholder="电话号码" required />
+                </div>
+                <div class="form-group">
+                  <input type="password" id="registerPassword" class="form-input" placeholder="Password（至少6位）" required minlength="6" />
+                </div>
+                <div class="form-group">
+                  <input type="password" id="registerPasswordConfirm" class="form-input" placeholder="确认密码" required />
+                </div>
+                <button type="submit" class="login-btn">立刻注册</button>
+                <p class="login-form__footer">已有账户? <a href="#" id="switchToLogin">立即登录</a></p>
+              </form>
+            </div>
+
+            <!-- 右侧登录 Logo 区域 -->
+            <div class="login-card__illustration">
+              <div class="login-illustration">
+                <img src="assets/登录logo.png" alt="石刻护柠" class="login-logo" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/login.js"></script>
+  </body>
+</html>
