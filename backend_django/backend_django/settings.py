@@ -91,7 +91,7 @@ USE_TZ = False
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / '..' / 'frontend']
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / '..' / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # 上传文件（商品图片等）
