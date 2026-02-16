@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, re_path
+from django.views.generic import TemplateView
 from django.views.static import serve
 
 from api.views import (
@@ -61,6 +62,8 @@ urlpatterns = [
     path("api/admin/users/<int:user_id>", admin_user_detail_view),
     path("api/customer/conversation", customer_conversation_view),
     path("api/customer/messages", customer_messages_view),
+    # 将根 URL 指向 index.html
+    path("", TemplateView.as_view(template_name="index.html"), name="index"),
 ]
 
 if settings.DEBUG:
